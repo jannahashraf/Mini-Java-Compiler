@@ -58,16 +58,6 @@ errors with `lexer.reporter.error(msg, line, col)`.
 python3 main.py tests/sample1.mj
 ```
 
-## Workflow (one repo, everyone on `main`)
-
-1. `git pull` before you start and before you push.
-2. Commit small, often, and only your files: `git add src/literals.py`
-3. Push: `git push`
-4. If `git pull` says there is a conflict in a file you own, fix it, then commit.
-
-To avoid collisions, do not edit other members' files. Coordinate changes to
-`src/tokens.py` with Member 1.
-
 ## Deliverables checklist (due Oct 30)
 
 - [ ] Source code (all modules implemented, sample passes)
