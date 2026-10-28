@@ -1,0 +1,6 @@
+// Keywords, identifiers and invalid characters are ignored: class @ 1name
+/* A block can contain //, quotes " ', and otherwise invalid symbols @ #.
+   It can also span multiple lines.
+*/
+/**//**/ // Adjacent empty blocks followed by a line comment.
+/* Nested openers do not nest: /* this closes at the first terminator. */

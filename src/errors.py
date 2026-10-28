@@ -4,9 +4,12 @@ OWNER: Member 5 (Comments, Errors, Testing & Report).
 
 Every scan_* helper should report a lexical error by calling
 ``lexer.reporter.error(message, line, col)`` so the output format stays
-consistent everywhere.
+consistent everywhere. Diagnostics go to stderr, keeping stdout available for
+the CLI's token stream, and are also collected in encounter order.
 """
 from __future__ import annotations
+
+import sys
 
 
 class LexerErrorReporter:
@@ -25,12 +28,13 @@ class LexerErrorReporter:
             Error: unclosed string literal starting at line 1, column 15.
             Error: unclosed comment starting at line 1, column 1.
 
-        TODO(Member 5): keep this formatting but feel free to add a
-        ``filename`` and to collect errors for the report.
+        Store the same formatted text that is printed to stderr. Reporting an
+        error does not raise an exception; the scanning helper decides how to
+        recover, and the CLI uses has_errors() to choose its exit status.
         """
         text = f"Error: {message} at line {line}, column {col}."
         self.errors.append(text)
-        print(text)
+        print(text, file=sys.stderr)
 
     def has_errors(self) -> bool:
-        return len(self.errors) > 0
+        return bool(self.errors)
