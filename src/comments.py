@@ -11,12 +11,32 @@ If a multi-line comment never closes before end of file, report:
 
 The main loop only calls this when the two current characters are "//" or "/*",
 so you may assume lexer.current() == '/' at entry.
-
-TODO(Member 5): implement this function.
 """
 from __future__ import annotations
 
 
 def skip_comment(lexer) -> None:
-    """Skip a single-line or multi-line comment."""
-    raise NotImplementedError("Member 5: skip_comment")
+    """Skip one comment, reporting an unclosed block at its opening position.
+
+    Leave a line comment's newline for the main loop. Block comments do not
+    nest: the first ``*/`` closes the comment, as in Java. All consumption goes
+    through ``advance()`` to keep the shared reader's line/column accurate.
+    """
+    start_line, start_col = lexer.line, lexer.col
+    style = lexer.peek()
+    lexer.advance()
+    lexer.advance()
+
+    if style == "/":
+        while not lexer.at_end() and lexer.current() not in ("\r", "\n"):
+            lexer.advance()
+        return
+
+    while not lexer.at_end():
+        if lexer.current() == "*" and lexer.peek() == "/":
+            lexer.advance()
+            lexer.advance()
+            return
+        lexer.advance()
+
+    lexer.reporter.error("unclosed comment starting", start_line, start_col)

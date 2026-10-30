@@ -54,6 +54,15 @@ def scan_number(lexer) -> None:
         )
         return
 
+    if lexer.current().isalpha() or lexer.current() == "_":
+        while lexer.current().isalnum() or lexer.current() == "_":
+            lexer.advance()
+        lexeme = lexer.source[start_pos:lexer.pos]
+        lexer.reporter.error(
+            f"invalid identifier '{lexeme}'", start_line, start_col
+        )
+        return
+
     lexeme = lexer.source[start_pos:lexer.pos]
     lexer.emit(TokenType.NUMBER, lexeme, start_line, start_col)
 

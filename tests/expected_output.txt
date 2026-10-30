@@ -39,3 +39,4 @@ Lexeme: ;, Token: SEMICOLON
 Lexeme: }, Token: RCUR
 Lexeme: }, Token: RCUR
 Lexeme: }, Token: RCUR
+Lexeme: , Token: EOF
