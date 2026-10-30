@@ -23,39 +23,9 @@ def scan_number(lexer) -> None:
     Use ``lexer.emit(TokenType.NUMBER, lexeme, line, col)`` and remember the
     start line/col BEFORE consuming characters.
 
+    TODO(Member 3): implement this function.
     """
-    start_pos = lexer.pos
-    start_line = lexer.line
-    start_col = lexer.col
-
-    while lexer.current().isdigit():
-        lexer.advance()
-
-    if lexer.current() == ".":
-        lexer.advance()
-        digits_after_decimal = 0
-        while lexer.current().isdigit():
-            lexer.advance()
-            digits_after_decimal += 1
-
-        if digits_after_decimal == 0:
-            lexeme = lexer.source[start_pos:lexer.pos]
-            lexer.reporter.error(
-                f"invalid number literal '{lexeme}'", start_line, start_col
-            )
-            return
-
-    if lexer.current() == ".":
-        while lexer.current().isdigit() or lexer.current() == ".":
-            lexer.advance()
-        lexeme = lexer.source[start_pos:lexer.pos]
-        lexer.reporter.error(
-            f"invalid number literal '{lexeme}'", start_line, start_col
-        )
-        return
-
-    lexeme = lexer.source[start_pos:lexer.pos]
-    lexer.emit(TokenType.NUMBER, lexeme, start_line, start_col)
+    raise NotImplementedError("Member 3: scan_number")
 
 
 def scan_string(lexer) -> None:
@@ -69,22 +39,6 @@ def scan_string(lexer) -> None:
                 "unclosed string literal starting", start_line, start_col)
         and do not emit a STRING token.
 
+    TODO(Member 3): implement this function.
     """
-    start_pos = lexer.pos
-    start_line = lexer.line
-    start_col = lexer.col
-    quote = lexer.current()
-    lexer.advance()
-
-    while not lexer.at_end() and lexer.current() != quote:
-        lexer.advance()
-
-    if lexer.at_end():
-        lexer.reporter.error(
-            "unclosed string literal starting", start_line, start_col
-        )
-        return
-
-    lexer.advance()
-    lexeme = lexer.source[start_pos:lexer.pos]
-    lexer.emit(TokenType.STRING, lexeme, start_line, start_col)
+    raise NotImplementedError("Member 3: scan_string")
