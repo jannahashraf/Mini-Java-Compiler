@@ -33,5 +33,6 @@ KEYWORDS: dict[str, TokenType] = {
     "false": TokenType.BOOLEAN_LITERAL,
 }
 
-# TODO(Member 2): review the list above against the spec and add any keyword
-# you find that is missing.
+# Reviewed against the Phase 1 spec: every reserved word is present.
+# ``main`` and ``true``/``false`` are extras required by the shared token
+# contract (MAIN and BOOLEAN_LITERAL respectively).

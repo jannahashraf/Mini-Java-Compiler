@@ -23,7 +23,21 @@ def scan_identifier_or_keyword(lexer) -> None:
     Helpers available on ``lexer``:
       lexer.current(), lexer.peek(), lexer.advance(), lexer.emit(...),
       lexer.symbol_table, lexer.reporter
-
-    TODO(Member 2): implement this function.
     """
-    raise NotImplementedError("Member 2: scan_identifier_or_keyword")
+    line, col = lexer.line, lexer.col
+
+    chars: list[str] = []
+    while True:
+        ch = lexer.current()
+        if not (ch.isalnum() or ch == "_"):
+            break
+        chars.append(lexer.advance())
+
+    lexeme = "".join(chars)
+    token_type = KEYWORDS.get(lexeme, TokenType.IDENTIFIER)
+    token = lexer.emit(token_type, lexeme, line, col)
+
+    # Only user-defined names belong in the symbol table; keywords,
+    # ``main`` and ``true``/``false`` are not identifiers.
+    if token_type is TokenType.IDENTIFIER:
+        lexer.symbol_table.insert(token)
