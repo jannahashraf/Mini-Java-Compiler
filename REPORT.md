@@ -2,7 +2,9 @@
 
 **Course:** CSCI415, Compiler Design — Fall 2026
 
-**Team:** all five members
+**Team:** Jannah Ashraf, Yahia Hany, Ahmed AbdelMaboud, Omar Hesham, Abdelrahman Zaky
+
+
 
 ## Overview and implementation status
 

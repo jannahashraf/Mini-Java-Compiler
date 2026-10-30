@@ -74,7 +74,7 @@ python3 -m unittest discover -s tests -v
 python3 -m unittest discover -s tests/integration -v
 ```
 
-## Deliverables checklist (due Oct 30)
+## Deliverables checklist 
 
 - [x] Source code (all modules implemented, sample passes)
 - [x] `tests/` input file with several Mini Java programs
