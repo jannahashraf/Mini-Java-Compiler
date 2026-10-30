@@ -18,17 +18,15 @@ class SymbolTable:
     def insert(self, token: Token) -> None:
         """Store an identifier token by its lexeme.
 
-        TODO(Member 2): insert only the FIRST occurrence of a name
-        (do not overwrite the original definition).
+        Only the FIRST occurrence of a name is kept, so the stored token
+        always points at the original definition.
         """
-        raise NotImplementedError("Member 2: implement SymbolTable.insert")
+        if token.lexeme not in self._symbols:
+            self._symbols[token.lexeme] = token
 
     def lookup(self, name: str) -> Token | None:
-        """Return the stored token for ``name``, or None if not present.
-
-        TODO(Member 2): implement the lookup.
-        """
-        raise NotImplementedError("Member 2: implement SymbolTable.lookup")
+        """Return the stored token for ``name``, or None if not present."""
+        return self._symbols.get(name)
 
     def __len__(self) -> int:
         return len(self._symbols)
