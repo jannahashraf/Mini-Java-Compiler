@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="CSCI 415 Compiler Design — Fall 2026" />
+  <title>Mini Java Compiler</title>
+  <style>
+  @page {
+    size: Letter;
+    margin: 1in;
+  }
+
+  html {
+    background: #ffffff;
+  }
+
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.55;
+    color: #000000;
+    background: #ffffff;
+    max-width: 6.5in;
+    margin: 1in auto;
+    padding: 0;
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  header#title-block-header {
+    text-align: center;
+    margin: 0 0 2em 0;
+  }
+
+  header#title-block-header h1.title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 20pt;
+    font-weight: bold;
+    margin: 0 0 0.25em 0;
+    text-align: center;
+  }
+
+  header#title-block-header p.subtitle {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 14pt;
+    font-style: italic;
+    margin: 0 0 0.75em 0;
+    text-align: center;
+  }
+
+  header#title-block-header p.author,
+  header#title-block-header p.date {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    margin: 0.2em 0;
+    text-align: center;
+  }
+
+  div.abstract {
+    margin: 1.5em 0 2em 0;
+    padding: 0;
+  }
+
+  div.abstract-title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 0.5em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Times New Roman", Times, serif;
+    color: #000000;
+    text-align: left;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 15pt;
+    font-weight: bold;
+    margin: 1.6em 0 0.6em 0;
+  }
+
+  h3 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 1.3em 0 0.5em 0;
+  }
+
+  h4 {
+    font-size: 12pt;
+    font-style: italic;
+    font-weight: normal;
+    margin: 1.1em 0 0.4em 0;
+  }
+
+  h5, h6 {
+    font-size: 12pt;
+    font-weight: normal;
+    font-style: italic;
+    margin: 1em 0 0.4em 0;
+  }
+
+  p {
+    margin: 0 0 0.8em 0;
+  }
+
+  ul, ol {
+    margin: 0 0 0.8em 0;
+    padding-left: 1.5em;
+  }
+
+  li {
+    margin-bottom: 0.25em;
+  }
+
+  a {
+    color: #000000;
+    text-decoration: underline;
+  }
+
+  blockquote {
+    margin: 1em 0 1em 1.5em;
+    padding-left: 1em;
+    border-left: 2px solid #000000;
+  }
+
+  code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 10pt;
+  }
+
+  pre {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9.5pt;
+    line-height: 1.35;
+    border: 1px solid #000000;
+    padding: 0.6em;
+    margin: 0.8em 0;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    text-align: left;
+  }
+
+  pre code {
+    font-size: inherit;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.8em 0 1em 0;
+    font-size: 10.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #000000;
+    padding: 0.25em 0.4em;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: bold;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #000000;
+    margin: 1.5em 0;
+  }
+
+  nav#TOC {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+    padding: 0.8em 0;
+    margin: 1.5em 0 2em 0;
+    font-size: 11pt;
+    text-align: left;
+  }
+
+  nav#TOC h2 {
+    font-size: 13pt;
+    margin: 0 0 0.5em 0;
+  }
+
+  nav#TOC > ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  nav#TOC ul ul {
+    list-style: none;
+    padding-left: 1.5em;
+  }
+
+  nav#TOC li {
+    margin: 0.15em 0;
+  }
+
+  @media print {
+    body {
+      max-width: none;
+      margin: 0;
+    }
+  }
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Mini Java Compiler</h1>
+<p class="subtitle">Phase 1: Lexical Analyzer — Technical
+Documentation</p>
+<p class="author">CSCI 415 Compiler Design — Fall 2026</p>
+<p class="date">Fall 2026</p>
+<div class="abstract">
+<div class="abstract-title">Abstract</div>
+<p>This document consolidates the Phase 1 technical documentation for
+the Mini Java lexical analyzer. It describes the scanning architecture,
+the shared data structures and token vocabulary, diagnostic behavior,
+test coverage, and command-line usage. The analyzer is written in Python
+without third-party lexer or parser libraries and produces a token
+stream and a symbol table for later compiler phases.</p>
+</div>
+</header>
+<nav id="TOC" role="doc-toc">
+<h2 id="toc-title">Contents</h2>
+<ul>
+<li><a href="#overview" id="toc-overview"><span
+class="toc-section-number">1</span> Overview</a>
+<ul>
+<li><a href="#quick-start" id="toc-quick-start"><span
+class="toc-section-number">1.1</span> Quick start</a></li>
+<li><a href="#documentation-index" id="toc-documentation-index"><span
+class="toc-section-number">1.2</span> Documentation index</a></li>
+<li><a href="#repository-layout" id="toc-repository-layout"><span
+class="toc-section-number">1.3</span> Repository layout</a></li>
+<li><a href="#one-paragraph-summary"
+id="toc-one-paragraph-summary"><span
+class="toc-section-number">1.4</span> One-paragraph summary</a></li>
+</ul></li>
+<li><a href="#architecture" id="toc-architecture"><span
+class="toc-section-number">2</span> Architecture</a>
+<ul>
+<li><a href="#pipeline" id="toc-pipeline"><span
+class="toc-section-number">2.1</span> Pipeline</a></li>
+<li><a href="#module-responsibilities"
+id="toc-module-responsibilities"><span
+class="toc-section-number">2.2</span> Module responsibilities</a></li>
+<li><a href="#the-lexer-as-shared-context"
+id="toc-the-lexer-as-shared-context"><span
+class="toc-section-number">2.3</span> The <code>Lexer</code> as shared
+context</a></li>
+<li><a href="#character-reader" id="toc-character-reader"><span
+class="toc-section-number">2.4</span> Character reader</a></li>
+<li><a href="#main-loop-and-dispatch"
+id="toc-main-loop-and-dispatch"><span
+class="toc-section-number">2.5</span> Main loop and dispatch</a></li>
+<li><a href="#scanning-algorithms" id="toc-scanning-algorithms"><span
+class="toc-section-number">2.6</span> Scanning algorithms</a></li>
+<li><a href="#complexity" id="toc-complexity"><span
+class="toc-section-number">2.7</span> Complexity</a></li>
+<li><a href="#phase-boundaries" id="toc-phase-boundaries"><span
+class="toc-section-number">2.8</span> Phase boundaries</a></li>
+</ul></li>
+<li><a href="#data-structures" id="toc-data-structures"><span
+class="toc-section-number">3</span> Data Structures</a>
+<ul>
+<li><a href="#tokentype-enum" id="toc-tokentype-enum"><span
+class="toc-section-number">3.1</span> <code>TokenType</code>
+(enum)</a></li>
+<li><a href="#token-dataclass" id="toc-token-dataclass"><span
+class="toc-section-number">3.2</span> <code>Token</code>
+(dataclass)</a></li>
+<li><a href="#lexer-central-state" id="toc-lexer-central-state"><span
+class="toc-section-number">3.3</span> <code>Lexer</code> (central
+state)</a></li>
+<li><a href="#symboltable" id="toc-symboltable"><span
+class="toc-section-number">3.4</span> <code>SymbolTable</code></a></li>
+<li><a href="#lexererrorreporter" id="toc-lexererrorreporter"><span
+class="toc-section-number">3.5</span>
+<code>LexerErrorReporter</code></a></li>
+<li><a href="#lookup-tables" id="toc-lookup-tables"><span
+class="toc-section-number">3.6</span> Lookup tables</a></li>
+<li><a href="#how-the-structures-fit-together"
+id="toc-how-the-structures-fit-together"><span
+class="toc-section-number">3.7</span> How the structures fit
+together</a></li>
+</ul></li>
+<li><a href="#token-reference" id="toc-token-reference"><span
+class="toc-section-number">4</span> Token Reference</a>
+<ul>
+<li><a href="#token-categories" id="toc-token-categories"><span
+class="toc-section-number">4.1</span> Token categories</a></li>
+<li><a href="#keywords-1" id="toc-keywords-1"><span
+class="toc-section-number">4.2</span> Keywords</a></li>
+<li><a href="#identifiers" id="toc-identifiers"><span
+class="toc-section-number">4.3</span> Identifiers</a></li>
+<li><a href="#numeric-literals" id="toc-numeric-literals"><span
+class="toc-section-number">4.4</span> Numeric literals</a></li>
+<li><a href="#string-literals" id="toc-string-literals"><span
+class="toc-section-number">4.5</span> String literals</a></li>
+<li><a href="#operators" id="toc-operators"><span
+class="toc-section-number">4.6</span> Operators</a></li>
+<li><a href="#delimiters" id="toc-delimiters"><span
+class="toc-section-number">4.7</span> Delimiters</a></li>
+<li><a href="#whitespace-and-comments"
+id="toc-whitespace-and-comments"><span
+class="toc-section-number">4.8</span> Whitespace and comments</a></li>
+<li><a href="#end-of-file-and-errors"
+id="toc-end-of-file-and-errors"><span
+class="toc-section-number">4.9</span> End of file and errors</a></li>
+<li><a href="#example" id="toc-example"><span
+class="toc-section-number">4.10</span> Example</a></li>
+</ul></li>
+<li><a href="#error-handling" id="toc-error-handling"><span
+class="toc-section-number">5</span> Error Handling</a>
+<ul>
+<li><a href="#the-reporter" id="toc-the-reporter"><span
+class="toc-section-number">5.1</span> The reporter</a></li>
+<li><a href="#position-conventions" id="toc-position-conventions"><span
+class="toc-section-number">5.2</span> Position conventions</a></li>
+<li><a href="#diagnostic-kinds" id="toc-diagnostic-kinds"><span
+class="toc-section-number">5.3</span> Diagnostic kinds</a></li>
+<li><a href="#recovery-behavior-by-helper"
+id="toc-recovery-behavior-by-helper"><span
+class="toc-section-number">5.4</span> Recovery behavior by
+helper</a></li>
+<li><a href="#multiple-errors" id="toc-multiple-errors"><span
+class="toc-section-number">5.5</span> Multiple errors</a></li>
+<li><a href="#reporter-lifetime" id="toc-reporter-lifetime"><span
+class="toc-section-number">5.6</span> Reporter lifetime</a></li>
+<li><a href="#cli-exit-status" id="toc-cli-exit-status"><span
+class="toc-section-number">5.7</span> CLI exit status</a></li>
+</ul></li>
+<li><a href="#testing" id="toc-testing"><span
+class="toc-section-number">6</span> Testing</a>
+<ul>
+<li><a href="#test-suites" id="toc-test-suites"><span
+class="toc-section-number">6.1</span> Test suites</a></li>
+<li><a href="#fixtures" id="toc-fixtures"><span
+class="toc-section-number">6.2</span> Fixtures</a></li>
+<li><a href="#manual-checks" id="toc-manual-checks"><span
+class="toc-section-number">6.3</span> Manual checks</a></li>
+<li><a href="#adding-tests" id="toc-adding-tests"><span
+class="toc-section-number">6.4</span> Adding tests</a></li>
+</ul></li>
+<li><a href="#usage" id="toc-usage"><span
+class="toc-section-number">7</span> Usage</a>
+<ul>
+<li><a href="#requirements" id="toc-requirements"><span
+class="toc-section-number">7.1</span> Requirements</a></li>
+<li><a href="#command-line" id="toc-command-line"><span
+class="toc-section-number">7.2</span> Command line</a></li>
+<li><a href="#exit-codes" id="toc-exit-codes"><span
+class="toc-section-number">7.3</span> Exit codes</a></li>
+<li><a href="#programmatic-use" id="toc-programmatic-use"><span
+class="toc-section-number">7.4</span> Programmatic use</a></li>
+<li><a href="#what-the-scanner-does-not-do"
+id="toc-what-the-scanner-does-not-do"><span
+class="toc-section-number">7.5</span> What the scanner does not
+do</a></li>
+<li><a href="#related-reading" id="toc-related-reading"><span
+class="toc-section-number">7.6</span> Related reading</a></li>
+</ul></li>
+</ul>
+</nav>
+<h2 data-number="1" id="overview"><span
+class="header-section-number">1</span> Overview</h2>
+<p>This documentation covers Phase 1 of the Mini Java compiler: a
+hand-written lexical analyzer (scanner) that turns Mini Java source text
+into a stream of tokens and builds a symbol table of user-defined
+identifiers.</p>
+<p>No third-party or ready-made lexer/parser libraries are used. The
+only runtime dependency is the Python standard library (Python
+3.10+).</p>
+<h3 data-number="1.1" id="quick-start"><span
+class="header-section-number">1.1</span> Quick start</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scan a sample program; tokens go to stdout.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/sample1.mj</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the unit and CLI tests.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests <span class="at">-v</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the whole-lexer integration tests.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests/integration <span class="at">-v</span></span></code></pre></div>
+<h3 data-number="1.2" id="documentation-index"><span
+class="header-section-number">1.2</span> Documentation index</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Document</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#architecture">Architecture</a></td>
+<td>How the scanner works end to end: reader, main loop, dispatch,
+helper modules, and data flow.</td>
+</tr>
+<tr>
+<td><a href="#data-structures">Data Structures</a></td>
+<td><code>TokenType</code>, <code>Token</code>, <code>Lexer</code>
+state, <code>SymbolTable</code>, error reporter, and lookup tables.</td>
+</tr>
+<tr>
+<td><a href="#token-reference">Token Reference</a></td>
+<td>Every token category, keyword, operator, delimiter, and literal
+form.</td>
+</tr>
+<tr>
+<td><a href="#error-handling">Error Handling</a></td>
+<td>Diagnostic format, source positions, recovery behavior, and exit
+codes.</td>
+</tr>
+<tr>
+<td><a href="#testing">Testing</a></td>
+<td>Test suites, fixtures, and what each test covers.</td>
+</tr>
+<tr>
+<td><a href="#usage">Usage</a></td>
+<td>CLI and programmatic usage, output format, and examples.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="1.3" id="repository-layout"><span
+class="header-section-number">1.3</span> Repository layout</h3>
+<pre><code>main.py                  CLI entry point
+src/
+  tokens.py              TokenType + Token (shared contract)
+  scanner.py             Lexer: character reader, main loop, dispatch
+  keywords.py            Keyword lookup table
+  identifiers.py         scan_identifier_or_keyword()
+  symbol_table.py        SymbolTable for identifiers
+  literals.py            scan_number() / scan_string()
+  operators.py           scan_operator_or_delimiter()
+  comments.py            skip_comment()
+  errors.py              LexerErrorReporter
+tests/                   Unit, CLI, and integration tests plus fixtures
+docs/                    This documentation
+REPORT.md                Phase 1 report</code></pre>
+<h3 data-number="1.4" id="one-paragraph-summary"><span
+class="header-section-number">1.4</span> One-paragraph summary</h3>
+<p><code>main.py</code> reads a source file and constructs a
+<code>Lexer</code>. The lexer walks the source one character at a time,
+tracking <code>pos</code>, <code>line</code>, and <code>col</code>. Its
+main loop skips whitespace, delegates comments, identifiers/keywords,
+numbers, strings, operators, and delimiters to small helper modules, and
+appends a <code>Token</code> for each lexeme it recognizes. Identifiers
+are also inserted into a <code>SymbolTable</code>, which keeps the first
+occurrence of each name. Lexical errors are recorded and printed to
+stderr by a shared <code>LexerErrorReporter</code> without aborting the
+scan. When the source is exhausted, the lexer appends a final
+<code>EOF</code> token and returns the complete token list.</p>
+<h2 data-number="2" id="architecture"><span
+class="header-section-number">2</span> Architecture</h2>
+<p>The lexer is a single-pass, character-oriented scanner.
+<code>main.py</code> reads the whole source file into a string, builds
+one <code>Lexer</code>, and asks it for a token list. All scanning is
+done by the <code>Lexer</code> plus small helper functions that receive
+the lexer as their context object.</p>
+<h3 data-number="2.1" id="pipeline"><span
+class="header-section-number">2.1</span> Pipeline</h3>
+<pre class="text"><code>source file
+    |
+    v
+main.py  (read UTF-8 text)
+    |
+    v
+Lexer.scan_tokens()
+    |
+    +--&gt; whitespace .................. advance()
+    +--&gt; // or /* .................... comments.skip_comment()
+    +--&gt; letter or _ ................. identifiers.scan_identifier_or_keyword()
+    +--&gt; digit ....................... literals.scan_number()
+    +--&gt; &#39; or &quot; ...................... literals.scan_string()
+    +--&gt; anything else ............... operators.scan_operator_or_delimiter()
+    |
+    v
+tokens: list[Token]   +   symbol_table: SymbolTable   +   reporter.errors</code></pre>
+<p>Every successful helper call consumes characters through
+<code>Lexer.advance()</code> and usually calls
+<code>Lexer.emit(...)</code>. Comments and whitespace produce no token.
+Errors are reported through <code>Lexer.reporter</code> and scanning
+continues.</p>
+<h3 data-number="2.2" id="module-responsibilities"><span
+class="header-section-number">2.2</span> Module responsibilities</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Module</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main.py</code></td>
+<td>Parse CLI arguments, read the source file, create a
+<code>Lexer</code>, print tokens, map errors to an exit code.</td>
+</tr>
+<tr>
+<td><code>src/tokens.py</code></td>
+<td>Shared <code>TokenType</code> enum and <code>Token</code> dataclass.
+This is the contract between all modules.</td>
+</tr>
+<tr>
+<td><code>src/scanner.py</code></td>
+<td><code>Lexer</code> class: source text, cursor position, line/column
+tracking, token collection, main loop, and dispatch.</td>
+</tr>
+<tr>
+<td><code>src/keywords.py</code></td>
+<td><code>KEYWORDS</code> dictionary mapping reserved words to token
+types.</td>
+</tr>
+<tr>
+<td><code>src/identifiers.py</code></td>
+<td><code>scan_identifier_or_keyword()</code>: consume an identifier,
+classify it as keyword or <code>IDENTIFIER</code>, update the symbol
+table.</td>
+</tr>
+<tr>
+<td><code>src/symbol_table.py</code></td>
+<td><code>SymbolTable</code>: first occurrence of each user-defined
+identifier, keyed by lexeme.</td>
+</tr>
+<tr>
+<td><code>src/literals.py</code></td>
+<td><code>scan_number()</code> and <code>scan_string()</code>: numeric
+and quoted-string literals, including invalid forms.</td>
+</tr>
+<tr>
+<td><code>src/operators.py</code></td>
+<td><code>scan_operator_or_delimiter()</code>: longest-match operators,
+delimiters, and unknown-character errors.</td>
+</tr>
+<tr>
+<td><code>src/comments.py</code></td>
+<td><code>skip_comment()</code>: <code>//</code> line comments and
+non-nesting <code>/* ... */</code> block comments.</td>
+</tr>
+<tr>
+<td><code>src/errors.py</code></td>
+<td><code>LexerErrorReporter</code>: format, record, and print lexical
+diagnostics.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="2.3" id="the-lexer-as-shared-context"><span
+class="header-section-number">2.3</span> The <code>Lexer</code> as
+shared context</h3>
+<p>The helpers are plain functions rather than subclasses or separate
+scanners. Each one receives the active <code>Lexer</code> and uses the
+same public surface:</p>
+<ul>
+<li><code>lexer.current()</code> — current character, or <code>""</code>
+at end of input.</li>
+<li><code>lexer.peek(offset=1)</code> — look ahead without
+consuming.</li>
+<li><code>lexer.advance()</code> — consume one character and update
+line/column.</li>
+<li><code>lexer.at_end()</code> — whether the cursor is past the last
+character.</li>
+<li><code>lexer.emit(type, lexeme, line, col)</code> — append a token
+and return it.</li>
+<li><code>lexer.reporter</code> — shared error reporter.</li>
+<li><code>lexer.symbol_table</code> — shared symbol table.</li>
+</ul>
+<p>Because every helper consumes text through <code>advance()</code>,
+source positions remain consistent even when large comments or strings
+are skipped.</p>
+<h3 data-number="2.4" id="character-reader"><span
+class="header-section-number">2.4</span> Character reader</h3>
+<p>The reader is index-based:</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td>The complete input string.</td>
+</tr>
+<tr>
+<td><code>pos</code></td>
+<td>Index of the next character to consume.</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td>1-based current line.</td>
+</tr>
+<tr>
+<td><code>col</code></td>
+<td>1-based current column.</td>
+</tr>
+</tbody>
+</table>
+<p><code>advance()</code> returns the current character, increments
+<code>pos</code>, and updates position. A <code>\n</code> increments
+<code>line</code> and resets <code>col</code> to 1; every other
+character (including <code>\r</code>) increments <code>col</code>.
+<code>current()</code> and <code>peek()</code> return <code>""</code>
+past the end so callers can compare without bounds checks.</p>
+<h3 data-number="2.5" id="main-loop-and-dispatch"><span
+class="header-section-number">2.5</span> Main loop and dispatch</h3>
+<p><code>Lexer.scan_tokens()</code> repeatedly inspects
+<code>current()</code> and chooses a helper in a fixed priority
+order:</p>
+<ol type="1">
+<li><strong>Whitespace</strong> (<code>" \t\r\n"</code>): consumed one
+character at a time.</li>
+<li><strong>Comments</strong>: only when the current character is
+<code>/</code> and the next is <code>/</code> or <code>*</code>. This
+check happens before operators so <code>/</code> is reserved for
+division unless it starts a comment.</li>
+<li><strong>Identifiers/keywords</strong>:
+<code>ch.isalpha() or ch == "_"</code>.</li>
+<li><strong>Numbers</strong>: <code>ch.isdigit()</code>.</li>
+<li><strong>Strings</strong>: current character is <code>"</code> or
+<code>'</code>.</li>
+<li><strong>Operators/delimiters/everything else</strong>: delegated to
+the operator helper, which also reports unknown characters.</li>
+</ol>
+<p>After the loop ends, the lexer appends
+<code>Token(TokenType.EOF, "", line, col)</code>. <code>EOF</code> is
+always present exactly once, even when errors occurred.</p>
+<h3 data-number="2.6" id="scanning-algorithms"><span
+class="header-section-number">2.6</span> Scanning algorithms</h3>
+<h4 data-number="2.6.1" id="identifiers-and-keywords"><span
+class="header-section-number">2.6.1</span> Identifiers and keywords</h4>
+<p><code>scan_identifier_or_keyword()</code> records the start position,
+consumes a run of <code>isalnum()</code> or <code>_</code> characters,
+then looks up the exact lexeme in <code>KEYWORDS</code>. A hit emits the
+mapped token type; otherwise it emits <code>IDENTIFIER</code> and
+inserts the token into the symbol table. Lookup is case-sensitive
+(<code>class</code> is a keyword, <code>Class</code> is an identifier).
+<code>main</code>, <code>true</code>, and <code>false</code> are handled
+by the same table (<code>MAIN</code> and
+<code>BOOLEAN_LITERAL</code>).</p>
+<h4 data-number="2.6.2" id="numbers"><span
+class="header-section-number">2.6.2</span> Numbers</h4>
+<p><code>scan_number()</code> consumes digits, then optionally a single
+decimal point followed by at least one digit. It then detects invalid
+continuations:</p>
+<ul>
+<li>a trailing <code>.</code> with no following digit →
+<code>invalid number literal</code> error;</li>
+<li>a second <code>.</code> → consume the malformed run and report
+<code>invalid number literal</code>;</li>
+<li>a letter or <code>_</code> after the digits → consume the whole run
+and report <code>invalid identifier</code> (for example
+<code>1name</code> or <code>2_name</code>).</li>
+</ul>
+<p>Signs are not part of a number: <code>-5</code> scans as
+<code>MATHOP</code> then <code>NUMBER</code>. Exponents and hexadecimal
+forms are not supported.</p>
+<h4 data-number="2.6.3" id="strings"><span
+class="header-section-number">2.6.3</span> Strings</h4>
+<p><code>scan_string()</code> remembers the opening quote, then consumes
+until the same quote character. Single- and double-quoted strings are
+both accepted. There is no escape processing; a backslash is ordinary
+text. If EOF is reached first, the helper reports
+<code>unclosed string literal starting</code> at the opening position
+and emits no token. Newlines inside an unfinished string are still
+consumed and advance the line counter.</p>
+<h4 data-number="2.6.4" id="comments"><span
+class="header-section-number">2.6.4</span> Comments</h4>
+<p>The main loop calls <code>skip_comment()</code> only when
+<code>/</code> is followed by <code>/</code> or <code>*</code>. The
+helper records the opening position and consumes the two-character
+opener.</p>
+<ul>
+<li><code>//</code>: consume until <code>\r</code>, <code>\n</code>, or
+EOF. The line ending is left for the main loop’s whitespace
+handling.</li>
+<li><code>/* ... */</code>: consume until the first <code>*/</code>,
+including it. Block comments do not nest, matching Java. If EOF is
+reached, report <code>unclosed comment starting</code> once at the
+opening position; the cursor remains at EOF.</li>
+</ul>
+<h4 data-number="2.6.5" id="operators-and-delimiters"><span
+class="header-section-number">2.6.5</span> Operators and delimiters</h4>
+<p><code>scan_operator_or_delimiter()</code> builds the two-character
+candidate <code>current() + peek()</code>. It checks the two-character
+operator table first (<code>&gt;=</code>, <code>&lt;=</code>,
+<code>==</code>, <code>!=</code>), then the one-character operator
+table, then the delimiter table. Anything unmatched is consumed and
+reported as <code>invalid character '&lt;ch&gt;'</code>. This
+longest-match order is what makes <code>&gt;=</code> one
+<code>LOGOP</code> instead of <code>&gt;</code> followed by
+<code>=</code>.</p>
+<h3 data-number="2.7" id="complexity"><span
+class="header-section-number">2.7</span> Complexity</h3>
+<p>Scanning is one pass over the input. Each character is consumed at
+most once and lookups use dictionaries, so time is O(n) in the source
+length. Auxiliary space is O(t) for the token list, O(s) for the symbol
+table (distinct identifiers), and O(e) for recorded errors. Helpers use
+loops, not recursion, so very large comments and strings do not hit
+recursion limits.</p>
+<h3 data-number="2.8" id="phase-boundaries"><span
+class="header-section-number">2.8</span> Phase boundaries</h3>
+<p>This project implements only lexical analysis. It does not parse
+grammar, type-check, or generate code. The token stream and
+first-occurrence symbol table are the hand-off points intended for later
+phases (parsing and semantic analysis). See <a
+href="#data-structures">Data Structures</a> and <a
+href="#token-reference">Token Reference</a> for their exact shapes.</p>
+<h2 data-number="3" id="data-structures"><span
+class="header-section-number">3</span> Data Structures</h2>
+<p>The scanner uses a small set of types: one enum for token categories,
+one token record, one central mutable lexer object, one symbol table,
+one error collector, and several constant lookup dictionaries.</p>
+<h3 data-number="3.1" id="tokentype-enum"><span
+class="header-section-number">3.1</span> <code>TokenType</code>
+(enum)</h3>
+<p><code>src/tokens.py</code> defines <code>TokenType</code> with
+<code>auto()</code> values. The enum is the shared contract: every
+helper and test refers to these names, so adding, renaming, or removing
+a member affects the whole project.</p>
+<p>Members grouped by purpose:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Group</th>
+<th>Members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keywords</td>
+<td><code>CLASS</code>, <code>PUBLIC</code>, <code>STATIC</code>,
+<code>VOID</code>, <code>INT</code>, <code>FLOAT</code>,
+<code>BOOLEAN</code>, <code>CHAR</code>, <code>STRING_TYPE</code>,
+<code>IF</code>, <code>ELSE</code>, <code>WHILE</code>,
+<code>FOR</code>, <code>RETURN</code>, <code>MAIN</code></td>
+</tr>
+<tr>
+<td>Identifiers and literals</td>
+<td><code>IDENTIFIER</code>, <code>NUMBER</code>, <code>STRING</code>,
+<code>BOOLEAN_LITERAL</code></td>
+</tr>
+<tr>
+<td>Operators</td>
+<td><code>ASSIGN</code>, <code>MATHOP</code>, <code>LOGOP</code></td>
+</tr>
+<tr>
+<td>Delimiters</td>
+<td><code>LPAR</code>, <code>RPAR</code>, <code>LCUR</code>,
+<code>RCUR</code>, <code>LSQU</code>, <code>RSQU</code>,
+<code>SEMICOLON</code>, <code>COMMA</code>, <code>DOT</code></td>
+</tr>
+<tr>
+<td>Bookkeeping</td>
+<td><code>EOF</code>, <code>ERROR</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>ERROR</code> exists in the contract but the current scanner
+does not emit it: errors are reported as diagnostics instead.
+<code>EOF</code> is always emitted as the final token.</p>
+<h3 data-number="3.2" id="token-dataclass"><span
+class="header-section-number">3.2</span> <code>Token</code>
+(dataclass)</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Token:</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>: TokenType</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    lexeme: <span class="bu">str</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    line: <span class="bu">int</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    col: <span class="bu">int</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__str__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f&quot;Lexeme: </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>lexeme<span class="sc">}</span><span class="ss">, Token: </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span><span class="bu">type</span><span class="sc">.</span>name<span class="sc">}</span><span class="ss">&quot;</span></span></code></pre></div>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td><code>TokenType</code></td>
+<td>Classified category.</td>
+</tr>
+<tr>
+<td><code>lexeme</code></td>
+<td><code>str</code></td>
+<td>Exact source text that produced the token (for <code>EOF</code>,
+<code>""</code>).</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td><code>int</code></td>
+<td>1-based line of the token’s first character.</td>
+</tr>
+<tr>
+<td><code>col</code></td>
+<td><code>int</code></td>
+<td>1-based column of the token’s first character.</td>
+</tr>
+</tbody>
+</table>
+<p>Because it is a regular dataclass, equality compares all four fields
+and the generated <code>repr</code> is available for debugging.
+<code>str(token)</code> is the CLI output format, for example
+<code>Lexeme: class, Token: CLASS</code>.</p>
+<p>For string tokens the lexeme retains the quotes (<code>"Ali"</code>,
+<code>'A'</code>). For numbers it is the original spelling
+(<code>85.5</code>, not a parsed float).</p>
+<h3 data-number="3.3" id="lexer-central-state"><span
+class="header-section-number">3.3</span> <code>Lexer</code> (central
+state)</h3>
+<p>Defined in <code>src/scanner.py</code>. One instance scans one source
+string.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code></td>
+<td>Entire input text.</td>
+</tr>
+<tr>
+<td><code>pos</code></td>
+<td><code>int</code></td>
+<td>Index of the next character to read.</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td><code>int</code></td>
+<td>Current 1-based line. Starts at 1.</td>
+</tr>
+<tr>
+<td><code>col</code></td>
+<td><code>int</code></td>
+<td>Current 1-based column. Starts at 1.</td>
+</tr>
+<tr>
+<td><code>reporter</code></td>
+<td><code>LexerErrorReporter</code></td>
+<td>Collects and prints diagnostics.</td>
+</tr>
+<tr>
+<td><code>symbol_table</code></td>
+<td><code>SymbolTable</code></td>
+<td>First occurrences of user identifiers.</td>
+</tr>
+<tr>
+<td><code>tokens</code></td>
+<td><code>list[Token]</code></td>
+<td>Tokens emitted during the scan.</td>
+</tr>
+</tbody>
+</table>
+<p>Key methods:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current() -&gt; str</code></td>
+<td>Returns <code>source[pos]</code>, or <code>""</code> at/after
+end.</td>
+</tr>
+<tr>
+<td><code>peek(offset=1) -&gt; str</code></td>
+<td>Returns <code>source[pos + offset]</code>, or <code>""</code> out of
+range.</td>
+</tr>
+<tr>
+<td><code>advance() -&gt; str</code></td>
+<td>Consumes and returns the current character; updates
+<code>line</code>/<code>col</code>.</td>
+</tr>
+<tr>
+<td><code>at_end() -&gt; bool</code></td>
+<td><code>pos &gt;= len(source)</code>.</td>
+</tr>
+<tr>
+<td><code>emit(type, lexeme, line, col) -&gt; Token</code></td>
+<td>Constructs a <code>Token</code>, appends it to <code>tokens</code>,
+and returns it.</td>
+</tr>
+<tr>
+<td><code>scan_tokens() -&gt; list[Token]</code></td>
+<td>Runs the main loop and appends <code>EOF</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Invariants and behavior:</p>
+<ul>
+<li><code>0 &lt;= pos &lt;= len(source)</code>.</li>
+<li><code>line</code> starts at 1; <code>col</code> starts at 1 for each
+line.</li>
+<li><code>advance()</code> on <code>\n</code> increments
+<code>line</code> and resets <code>col = 1</code>; all other characters
+increment <code>col</code>. <code>\r</code> therefore does not start a
+new line itself.</li>
+<li><code>scan_tokens()</code> appends exactly one <code>EOF</code>
+token at the end, directly to <code>tokens</code> rather than through
+<code>emit()</code>. Repeated calls would append additional
+<code>EOF</code> tokens because the cursor is already at the end;
+callers use it once.</li>
+<li><code>tokens</code>, <code>reporter.errors</code>, and
+<code>symbol_table</code> are all readable after the scan for tests or
+later compiler phases.</li>
+</ul>
+<h3 data-number="3.4" id="symboltable"><span
+class="header-section-number">3.4</span> <code>SymbolTable</code></h3>
+<p>Defined in <code>src/symbol_table.py</code>. It stores user-defined
+identifier names, not keywords or
+<code>main</code>/<code>true</code>/<code>false</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SymbolTable:</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._symbols: <span class="bu">dict</span>[<span class="bu">str</span>, Token] <span class="op">=</span> {}</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> insert(<span class="va">self</span>, token: Token) <span class="op">-&gt;</span> <span class="va">None</span>: ...</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> lookup(<span class="va">self</span>, name: <span class="bu">str</span>) <span class="op">-&gt;</span> Token <span class="op">|</span> <span class="va">None</span>: ...</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__len__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">int</span>: ...</span></code></pre></div>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Member</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_symbols</code></td>
+<td>Private <code>dict[str, Token]</code> keyed by lexeme.</td>
+</tr>
+<tr>
+<td><code>insert(token)</code></td>
+<td>Stores only the first token for each lexeme; later occurrences are
+ignored.</td>
+</tr>
+<tr>
+<td><code>lookup(name)</code></td>
+<td>Returns the stored first token, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>len(table)</code></td>
+<td>Number of distinct names.</td>
+</tr>
+</tbody>
+</table>
+<p>Design notes:</p>
+<ul>
+<li>It is a flat, single-scope table. There is no nesting, shadowing, or
+type information yet; those belong to later phases.</li>
+<li>The stored <code>Token</code> includes the location of the first
+occurrence, which is why duplicates are deliberately not
+overwritten.</li>
+<li>Dictionary insertion order preserves first-seen order if later
+phases need to enumerate symbols.</li>
+</ul>
+<h3 data-number="3.5" id="lexererrorreporter"><span
+class="header-section-number">3.5</span>
+<code>LexerErrorReporter</code></h3>
+<p>Defined in <code>src/errors.py</code>.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LexerErrorReporter:</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.errors: <span class="bu">list</span>[<span class="bu">str</span>] <span class="op">=</span> []</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> error(<span class="va">self</span>, message: <span class="bu">str</span>, line: <span class="bu">int</span>, col: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="va">None</span>: ...</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> has_errors(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>: ...</span></code></pre></div>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Member</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>errors</code></td>
+<td>Formatted diagnostic strings in encounter order.</td>
+</tr>
+<tr>
+<td><code>error(...)</code></td>
+<td>Formats
+<code>Error: &lt;message&gt; at line &lt;line&gt;, column &lt;col&gt;.</code>,
+appends it, and prints it to stderr immediately.</td>
+</tr>
+<tr>
+<td><code>has_errors()</code></td>
+<td><code>True</code> when <code>errors</code> is non-empty.</td>
+</tr>
+</tbody>
+</table>
+<p>The reporter does not raise exceptions. It is normally one instance
+per <code>Lexer</code>, so separate scans do not share errors. See <a
+href="#error-handling">Error Handling</a> for the full contract.</p>
+<h3 data-number="3.6" id="lookup-tables"><span
+class="header-section-number">3.6</span> Lookup tables</h3>
+<p>All lookup tables are module-level constants, created once at import
+time.</p>
+<h4 data-number="3.6.1" id="keywords"><span
+class="header-section-number">3.6.1</span> <code>KEYWORDS</code></h4>
+<p><code>dict[str, TokenType]</code> in <code>src/keywords.py</code>,
+keyed by exact, case-sensitive lexeme. It also maps <code>main</code> to
+<code>MAIN</code> and <code>true</code>/<code>false</code> to
+<code>BOOLEAN_LITERAL</code>. See <a href="#token-reference">Token
+Reference</a> for the complete list.</p>
+<h4 data-number="3.6.2" id="operator-and-delimiter-tables"><span
+class="header-section-number">3.6.2</span> Operator and delimiter
+tables</h4>
+<p><code>src/operators.py</code> defines three dictionaries:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Key type</th>
+<th>Value</th>
+<th>Checked</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TWO_CHAR_OPERATORS</code></td>
+<td><code>str</code> (2 chars)</td>
+<td><code>LOGOP</code> for <code>&gt;=</code>, <code>&lt;=</code>,
+<code>==</code>, <code>!=</code></td>
+<td>First</td>
+</tr>
+<tr>
+<td><code>ONE_CHAR_OPERATORS</code></td>
+<td><code>str</code> (1 char)</td>
+<td><code>ASSIGN</code> for <code>=</code>, <code>MATHOP</code> for
+<code>+ - * / %</code>, <code>LOGOP</code> for
+<code>&gt; &lt; !</code></td>
+<td>Second</td>
+</tr>
+<tr>
+<td><code>DELIMITERS</code></td>
+<td><code>str</code> (1 char)</td>
+<td>Parentheses, braces, brackets, <code>;</code>, <code>,</code>,
+<code>.</code></td>
+<td>Third</td>
+</tr>
+</tbody>
+</table>
+<p>Checking two-character operators first implements longest match.</p>
+<h3 data-number="3.7" id="how-the-structures-fit-together"><span
+class="header-section-number">3.7</span> How the structures fit
+together</h3>
+<pre class="text"><code>Lexer.source ──(reader)──&gt; current/peek/advance
+                                |
+                                v
+                    helper consumes characters
+                                |
+                                v
+                    Lexer.emit(type, lexeme, line, col)
+                                |
+                                +--&gt; Lexer.tokens : list[Token]
+                                |
+                                +--&gt; Lexer.symbol_table (identifiers only)
+
+helper on bad input ──&gt; Lexer.reporter.error(...)
+                                |
+                                +--&gt; reporter.errors : list[str] -&gt; stderr</code></pre>
+<p>The CLI prints each <code>Token</code> with <code>str(token)</code>
+and uses <code>reporter.has_errors()</code> to choose the process exit
+status.</p>
+<h2 data-number="4" id="token-reference"><span
+class="header-section-number">4</span> Token Reference</h2>
+<p>This is the complete token vocabulary produced by the Phase 1 lexer.
+Token names come from <code>TokenType</code> in
+<code>src/tokens.py</code>.</p>
+<h3 data-number="4.1" id="token-categories"><span
+class="header-section-number">4.1</span> Token categories</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Category</th>
+<th>Token types</th>
+<th>Lexemes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keywords</td>
+<td><code>CLASS</code>, <code>PUBLIC</code>, <code>STATIC</code>,
+<code>VOID</code>, <code>INT</code>, <code>FLOAT</code>,
+<code>BOOLEAN</code>, <code>CHAR</code>, <code>STRING_TYPE</code>,
+<code>IF</code>, <code>ELSE</code>, <code>WHILE</code>,
+<code>FOR</code>, <code>RETURN</code>, <code>MAIN</code></td>
+<td>See keyword table below.</td>
+</tr>
+<tr>
+<td>Identifier</td>
+<td><code>IDENTIFIER</code></td>
+<td>Names starting with a letter or <code>_</code>, continuing with
+letters, digits, or <code>_</code>.</td>
+</tr>
+<tr>
+<td>Numeric literal</td>
+<td><code>NUMBER</code></td>
+<td>Integers such as <code>0</code>, <code>20</code>; floats such as
+<code>25.5</code>.</td>
+</tr>
+<tr>
+<td>String literal</td>
+<td><code>STRING</code></td>
+<td>Values in single or double quotes, e.g. <code>"Ali"</code>,
+<code>'A'</code>, <code>""</code>.</td>
+</tr>
+<tr>
+<td>Boolean literal</td>
+<td><code>BOOLEAN_LITERAL</code></td>
+<td><code>true</code>, <code>false</code>.</td>
+</tr>
+<tr>
+<td>Assignment</td>
+<td><code>ASSIGN</code></td>
+<td><code>=</code>.</td>
+</tr>
+<tr>
+<td>Arithmetic</td>
+<td><code>MATHOP</code></td>
+<td><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>,
+<code>%</code>.</td>
+</tr>
+<tr>
+<td>Comparison/logical</td>
+<td><code>LOGOP</code></td>
+<td><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>,
+<code>&lt;=</code>, <code>==</code>, <code>!=</code>,
+<code>!</code>.</td>
+</tr>
+<tr>
+<td>Delimiters</td>
+<td><code>LPAR</code>, <code>RPAR</code>, <code>LCUR</code>,
+<code>RCUR</code>, <code>LSQU</code>, <code>RSQU</code>,
+<code>SEMICOLON</code>, <code>COMMA</code>, <code>DOT</code></td>
+<td><code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>,
+<code>[</code>, <code>]</code>, <code>;</code>, <code>,</code>,
+<code>.</code>.</td>
+</tr>
+<tr>
+<td>Bookkeeping</td>
+<td><code>EOF</code></td>
+<td>Empty lexeme <code>""</code>; always the final token.</td>
+</tr>
+<tr>
+<td>Bookkeeping</td>
+<td><code>ERROR</code></td>
+<td>Reserved in the contract; not emitted by the current scanner.</td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="4.2" id="keywords-1"><span
+class="header-section-number">4.2</span> Keywords</h3>
+<p>Mini Java is case-sensitive and keyword lookup is exact. The mapping
+lives in <code>src/keywords.py</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Lexeme</th>
+<th>Token type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class</code></td>
+<td><code>CLASS</code></td>
+</tr>
+<tr>
+<td><code>public</code></td>
+<td><code>PUBLIC</code></td>
+</tr>
+<tr>
+<td><code>static</code></td>
+<td><code>STATIC</code></td>
+</tr>
+<tr>
+<td><code>void</code></td>
+<td><code>VOID</code></td>
+</tr>
+<tr>
+<td><code>int</code></td>
+<td><code>INT</code></td>
+</tr>
+<tr>
+<td><code>float</code></td>
+<td><code>FLOAT</code></td>
+</tr>
+<tr>
+<td><code>boolean</code></td>
+<td><code>BOOLEAN</code></td>
+</tr>
+<tr>
+<td><code>char</code></td>
+<td><code>CHAR</code></td>
+</tr>
+<tr>
+<td><code>String</code></td>
+<td><code>STRING_TYPE</code></td>
+</tr>
+<tr>
+<td><code>if</code></td>
+<td><code>IF</code></td>
+</tr>
+<tr>
+<td><code>else</code></td>
+<td><code>ELSE</code></td>
+</tr>
+<tr>
+<td><code>while</code></td>
+<td><code>WHILE</code></td>
+</tr>
+<tr>
+<td><code>for</code></td>
+<td><code>FOR</code></td>
+</tr>
+<tr>
+<td><code>return</code></td>
+<td><code>RETURN</code></td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td><code>MAIN</code></td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td><code>BOOLEAN_LITERAL</code></td>
+</tr>
+<tr>
+<td><code>false</code></td>
+<td><code>BOOLEAN_LITERAL</code></td>
+</tr>
+</tbody>
+</table>
+<p>Consequences of case sensitivity:</p>
+<ul>
+<li><code>class</code> is <code>CLASS</code>, but <code>Class</code> is
+<code>IDENTIFIER</code>.</li>
+<li><code>String</code> is <code>STRING_TYPE</code>, but
+<code>string</code> is <code>IDENTIFIER</code>.</li>
+<li><code>main</code> is <code>MAIN</code>, but <code>Main</code> is
+<code>IDENTIFIER</code>.</li>
+<li><code>true</code>/<code>false</code> are
+<code>BOOLEAN_LITERAL</code>, but <code>True</code>/<code>FALSE</code>
+are <code>IDENTIFIER</code>.</li>
+<li>The type keyword <code>boolean</code> (<code>BOOLEAN</code>) is
+distinct from the values <code>true</code>/<code>false</code>
+(<code>BOOLEAN_LITERAL</code>).</li>
+</ul>
+<h3 data-number="4.3" id="identifiers"><span
+class="header-section-number">4.3</span> Identifiers</h3>
+<p>An identifier:</p>
+<ul>
+<li>starts with a letter (<code>str.isalpha()</code>) or underscore
+<code>_</code>;</li>
+<li>continues with letters, digits (<code>str.isalnum()</code>), or
+<code>_</code>;</li>
+<li>is not a reserved word.</li>
+</ul>
+<p>Examples: <code>age</code>, <code>studentName</code>,
+<code>x1</code>, <code>_count</code>, <code>total_marks</code>.</p>
+<p>The implementation uses Python’s Unicode-aware
+<code>isalpha</code>/<code>isalnum</code> predicates, so non-ASCII
+letters are accepted even though the language is intended for ASCII
+identifiers. Only lexemes classified as <code>IDENTIFIER</code> are
+added to the symbol table.</p>
+<h3 data-number="4.4" id="numeric-literals"><span
+class="header-section-number">4.4</span> Numeric literals</h3>
+<p><code>NUMBER</code> covers integers and simple decimal floats:</p>
+<ul>
+<li><code>0</code>, <code>10</code>, <code>2026</code> — integers;</li>
+<li><code>25.5</code>, <code>0.5</code> — floats with digits on both
+sides of the dot.</li>
+</ul>
+<p>Not supported (and reported as lexical errors):</p>
+<ul>
+<li>a trailing dot such as <code>5.</code> →
+<code>invalid number literal</code>;</li>
+<li>more than one dot such as <code>1.2.3</code> →
+<code>invalid number literal</code>;</li>
+<li>a digit-run followed by a letter or <code>_</code> such as
+<code>1name</code> or <code>2_name</code> →
+<code>invalid identifier</code>.</li>
+</ul>
+<p>The lexeme is the original source spelling; numbers are not converted
+to <code>int</code>/<code>float</code> at this phase. A leading
+<code>-</code> or <code>+</code> is a separate operator token, so
+<code>-5</code> is <code>MATHOP</code> followed by <code>NUMBER</code>.
+Exponents, hex, underscores in numerals, and suffixes are not part of
+the language.</p>
+<p>Note that <code>.5</code> begins with <code>.</code>, which
+dispatches to the delimiter helper, so it becomes <code>DOT</code>
+followed by <code>NUMBER</code> rather than a single float.</p>
+<h3 data-number="4.5" id="string-literals"><span
+class="header-section-number">4.5</span> String literals</h3>
+<p><code>STRING</code> accepts either delimiter style:</p>
+<ul>
+<li>double-quoted: <code>"Hello"</code>, <code>"Ali"</code>,
+<code>""</code>;</li>
+<li>single-quoted: <code>'A'</code>, <code>'//'</code>,
+<code>''</code>.</li>
+</ul>
+<p>The lexeme includes the surrounding quotes. There is no escape
+processing: a backslash is an ordinary character and cannot escape the
+closing quote. A string may span lines. If EOF is reached before the
+matching quote, the scanner reports
+<code>unclosed string literal starting</code> at the opening quote and
+emits no <code>STRING</code> token.</p>
+<p>Comment markers inside strings are literal text,
+e.g. <code>"http://host/*path*/"</code> is one <code>STRING</code>
+token.</p>
+<h3 data-number="4.6" id="operators"><span
+class="header-section-number">4.6</span> Operators</h3>
+<p>Operators use longest match: two-character operators are tested
+before one-character operators.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Lexeme</th>
+<th>Token type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&gt;=</code></td>
+<td><code>LOGOP</code></td>
+<td>Two-character match.</td>
+</tr>
+<tr>
+<td><code>&lt;=</code></td>
+<td><code>LOGOP</code></td>
+<td>Two-character match.</td>
+</tr>
+<tr>
+<td><code>==</code></td>
+<td><code>LOGOP</code></td>
+<td>Two-character match.</td>
+</tr>
+<tr>
+<td><code>!=</code></td>
+<td><code>LOGOP</code></td>
+<td>Two-character match.</td>
+</tr>
+<tr>
+<td><code>&gt;</code></td>
+<td><code>LOGOP</code></td>
+<td>Single character.</td>
+</tr>
+<tr>
+<td><code>&lt;</code></td>
+<td><code>LOGOP</code></td>
+<td>Single character.</td>
+</tr>
+<tr>
+<td><code>!</code></td>
+<td><code>LOGOP</code></td>
+<td>Single character.</td>
+</tr>
+<tr>
+<td><code>=</code></td>
+<td><code>ASSIGN</code></td>
+<td>Assignment only; <code>==</code> is comparison.</td>
+</tr>
+<tr>
+<td><code>+</code></td>
+<td><code>MATHOP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td><code>MATHOP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td><code>MATHOP</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td><code>MATHOP</code></td>
+<td>Division, unless followed by <code>/</code> or <code>*</code> for a
+comment.</td>
+</tr>
+<tr>
+<td><code>%</code></td>
+<td><code>MATHOP</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Compound assignment (<code>+=</code>), increment/decrement
+(<code>++</code>, <code>--</code>), and bitwise operators are not
+defined; they would scan as separate tokens or errors.</p>
+<h3 data-number="4.7" id="delimiters"><span
+class="header-section-number">4.7</span> Delimiters</h3>
+<table>
+<thead>
+<tr>
+<th>Lexeme</th>
+<th>Token type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>(</code></td>
+<td><code>LPAR</code></td>
+</tr>
+<tr>
+<td><code>)</code></td>
+<td><code>RPAR</code></td>
+</tr>
+<tr>
+<td><code>{</code></td>
+<td><code>LCUR</code></td>
+</tr>
+<tr>
+<td><code>}</code></td>
+<td><code>RCUR</code></td>
+</tr>
+<tr>
+<td><code>[</code></td>
+<td><code>LSQU</code></td>
+</tr>
+<tr>
+<td><code>]</code></td>
+<td><code>RSQU</code></td>
+</tr>
+<tr>
+<td><code>;</code></td>
+<td><code>SEMICOLON</code></td>
+</tr>
+<tr>
+<td><code>,</code></td>
+<td><code>COMMA</code></td>
+</tr>
+<tr>
+<td><code>.</code></td>
+<td><code>DOT</code></td>
+</tr>
+</tbody>
+</table>
+<h3 data-number="4.8" id="whitespace-and-comments"><span
+class="header-section-number">4.8</span> Whitespace and comments</h3>
+<p>Whitespace (<code>space</code>, <code>\t</code>, <code>\r</code>,
+<code>\n</code>) is skipped and produces no token.</p>
+<p>Comments produce no token:</p>
+<ul>
+<li><code>// ...</code> until end of line or EOF;</li>
+<li><code>/* ... */</code> until the first <code>*/</code>; block
+comments do not nest.</li>
+</ul>
+<p>An unterminated block comment produces a diagnostic at its opening
+position, not a token. See <a href="#error-handling">Error
+Handling</a>.</p>
+<h3 data-number="4.9" id="end-of-file-and-errors"><span
+class="header-section-number">4.9</span> End of file and errors</h3>
+<ul>
+<li><code>EOF</code> has lexeme <code>""</code> and is appended exactly
+once after scanning. Its <code>line</code>/<code>col</code> are the
+position after the last consumed character.</li>
+<li><code>ERROR</code> is declared for the contract but unused. Lexical
+problems are reported through <code>LexerErrorReporter</code> and the
+scanner continues; the offending text generally produces no token.</li>
+</ul>
+<h3 data-number="4.10" id="example"><span
+class="header-section-number">4.10</span> Example</h3>
+<p>For <code>tests/sample1.mj</code>, the first tokens are:</p>
+<pre class="text"><code>Lexeme: class, Token: CLASS
+Lexeme: Student, Token: IDENTIFIER
+Lexeme: {, Token: LCUR
+Lexeme: public, Token: PUBLIC
+...
+Lexeme: , Token: EOF</code></pre>
+<p>The full golden stream is in <code>tests/expected_output.txt</code>;
+the integration suite compares it against the real scanner.</p>
+<h2 data-number="5" id="error-handling"><span
+class="header-section-number">5</span> Error Handling</h2>
+<p>Lexical errors are diagnostics, not exceptions. The scanner records
+the problem, keeps going where possible, and still produces a token
+stream ending in <code>EOF</code>.</p>
+<h3 data-number="5.1" id="the-reporter"><span
+class="header-section-number">5.1</span> The reporter</h3>
+<p>All helpers call the same method:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>lexer.reporter.error(message, line, col)</span></code></pre></div>
+<p><code>LexerErrorReporter.error()</code>:</p>
+<ol type="1">
+<li>formats the message as
+<code>Error: &lt;message&gt; at line &lt;line&gt;, column &lt;col&gt;.</code>;</li>
+<li>appends the formatted string to <code>reporter.errors</code> in
+encounter order;</li>
+<li>prints the same string to <strong>stderr</strong> immediately.</li>
+</ol>
+<p>So helpers pass only the bare message (for example
+<code>invalid character '@'</code>) and the starting position. The
+prefix <code>Error:</code>, the location phrase, and the final period
+are added centrally.</p>
+<p>Streams are separated deliberately: tokens are printed to stdout by
+the CLI and diagnostics go to stderr. <code>reporter.errors</code> is
+available for programmatic checks and tests.</p>
+<h3 data-number="5.2" id="position-conventions"><span
+class="header-section-number">5.2</span> Position conventions</h3>
+<ul>
+<li><code>line</code> and <code>col</code> are 1-based.</li>
+<li>Reported positions refer to the <strong>start</strong> of the
+offending construct, not the point where the error is detected. For
+example, an unclosed comment reports the opening <code>/*</code>, and an
+unclosed string reports the opening quote.</li>
+<li><code>col</code> counts characters, not bytes. A <code>\n</code>
+resets the column; <code>\r</code> counts as a normal character.</li>
+</ul>
+<h3 data-number="5.3" id="diagnostic-kinds"><span
+class="header-section-number">5.3</span> Diagnostic kinds</h3>
+<p>The scanner produces four required diagnostic forms.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Message passed to the reporter</th>
+<th>Typical output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unknown character</td>
+<td><code>invalid character '@'</code></td>
+<td><code>Error: invalid character '@' at line 1, column 12.</code></td>
+</tr>
+<tr>
+<td>Digit-started invalid name</td>
+<td><code>invalid identifier '1name'</code></td>
+<td><code>Error: invalid identifier '1name' at line 1, column 1.</code></td>
+</tr>
+<tr>
+<td>EOF inside a string</td>
+<td><code>unclosed string literal starting</code></td>
+<td><code>Error: unclosed string literal starting at line 1, column 15.</code></td>
+</tr>
+<tr>
+<td>EOF inside a block comment</td>
+<td><code>unclosed comment starting</code></td>
+<td><code>Error: unclosed comment starting at line 1, column 1.</code></td>
+</tr>
+<tr>
+<td>Malformed number</td>
+<td><code>invalid number literal '5.'</code></td>
+<td><code>Error: invalid number literal '5.' at line 1, column 1.</code></td>
+</tr>
+</tbody>
+</table>
+<p>The first four are exercised by dedicated fixtures in
+<code>tests/fixtures/errors/</code>. The malformed-number diagnostic has
+no separate fixture but is implemented in <code>scan_number()</code> and
+can be triggered with input such as <code>5.</code> or
+<code>1.2.3</code>.</p>
+<h3 data-number="5.4" id="recovery-behavior-by-helper"><span
+class="header-section-number">5.4</span> Recovery behavior by
+helper</h3>
+<h4 data-number="5.4.1" id="unknown-character-operators.py"><span
+class="header-section-number">5.4.1</span> Unknown character
+(<code>operators.py</code>)</h4>
+<p>The character is consumed, then the error is reported. Scanning
+resumes at the next character, so later tokens are still produced. For
+example, in <code>int x = 10 @ 5;</code> the error is recorded but
+<code>5</code> and <code>;</code> still scan normally.</p>
+<h4 data-number="5.4.2"
+id="malformed-number-invalid-identifier-literals.py"><span
+class="header-section-number">5.4.2</span> Malformed number / invalid
+identifier (<code>literals.py</code>)</h4>
+<p><code>scan_number()</code> consumes the malformed run and reports one
+error, emitting no token for it:</p>
+<ul>
+<li>trailing dot (<code>5.</code>) or second dot (<code>1.2.3</code>) →
+<code>invalid number literal</code>;</li>
+<li>letter/underscore after digits (<code>1name</code>,
+<code>2_name</code>) → <code>invalid identifier</code>.</li>
+</ul>
+<p>Consuming the whole run avoids producing misleading partial tokens
+such as <code>1</code> followed by <code>name</code>.</p>
+<h4 data-number="5.4.3" id="unclosed-string-literals.py"><span
+class="header-section-number">5.4.3</span> Unclosed string
+(<code>literals.py</code>)</h4>
+<p>The helper consumes to EOF looking for the closing quote, reports
+once at the opening quote, and emits no <code>STRING</code> token.
+Because the rest of the file is treated as string contents, any comments
+or errors after the opening quote are not scanned separately.</p>
+<h4 data-number="5.4.4" id="unclosed-block-comment-comments.py"><span
+class="header-section-number">5.4.4</span> Unclosed block comment
+(<code>comments.py</code>)</h4>
+<p>The helper consumes to EOF, reports once at the opening
+<code>/*</code>, and leaves the cursor at EOF. The main loop then
+appends <code>EOF</code>. Block comments do not nest, so the first
+<code>*/</code> always closes; an opener inside a comment is just
+text.</p>
+<h4 data-number="5.4.5" id="line-comments"><span
+class="header-section-number">5.4.5</span> Line comments</h4>
+<p>A <code>//</code> comment has no error condition: it ends at a line
+ending or EOF.</p>
+<h3 data-number="5.5" id="multiple-errors"><span
+class="header-section-number">5.5</span> Multiple errors</h3>
+<p>Reporting does not stop the scan, so several independent errors can
+be collected in one run. Order in <code>reporter.errors</code> matches
+source order of detection. Some constructs can swallow later input,
+however:</p>
+<ul>
+<li>an unclosed string consumes everything to EOF;</li>
+<li>an unclosed block comment consumes everything to EOF.</li>
+</ul>
+<p>For that reason <code>tests/sample_errors.mj</code> (which mixes an
+invalid symbol, an invalid identifier, an unclosed string, and an
+unclosed comment) is not used to verify all four diagnostics together;
+the independent fixtures are. An unclosed string before a block comment
+prevents the comment from being scanned as code.</p>
+<h3 data-number="5.6" id="reporter-lifetime"><span
+class="header-section-number">5.6</span> Reporter lifetime</h3>
+<p>A fresh <code>Lexer</code> creates a fresh
+<code>LexerErrorReporter</code>. Reporters do not share state, so
+scanning one file cannot leak diagnostics into another.
+<code>has_errors()</code> is simply <code>bool(self.errors)</code>.</p>
+<h3 data-number="5.7" id="cli-exit-status"><span
+class="header-section-number">5.7</span> CLI exit status</h3>
+<p><code>main.py</code> maps the scan result to an exit code:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>File scanned successfully; no lexical errors.</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>One or more lexical errors were reported.</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Incorrect command-line usage (not exactly one source-file
+argument).</td>
+</tr>
+</tbody>
+</table>
+<p>Tokens (including <code>EOF</code>) are still printed to stdout when
+the exit code is <code>1</code>; diagnostics are on stderr. Usage errors
+print the usage line to stdout and return <code>2</code>.</p>
+<h2 data-number="6" id="testing"><span
+class="header-section-number">6</span> Testing</h2>
+<p>Tests use Python’s standard-library <code>unittest</code> and
+exercise the real lexer, reader, reporter, and CLI. No replacement
+implementations or optional skips are used.</p>
+<p>Run all commands from the repository root.</p>
+<h3 data-number="6.1" id="test-suites"><span
+class="header-section-number">6.1</span> Test suites</h3>
+<h4 data-number="6.1.1" id="unit-and-cli-checks-18-tests"><span
+class="header-section-number">6.1.1</span> Unit and CLI checks — 18
+tests</h4>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests <span class="at">-v</span></span></code></pre></div>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/test_comments.py</code></td>
+<td>11</td>
+<td>Line and block comment boundaries, CRLF, nesting behavior, EOF
+handling, large blocks, comment-only fixtures.</td>
+</tr>
+<tr>
+<td><code>tests/test_errors.py</code></td>
+<td>4</td>
+<td>Exact diagnostic format, encounter order, stderr-only output,
+reporter isolation.</td>
+</tr>
+<tr>
+<td><code>tests/test_cli.py</code></td>
+<td>3</td>
+<td>Comment-only success, unclosed-comment failure, missing-argument
+usage error.</td>
+</tr>
+</tbody>
+</table>
+<p>Notable assertions:</p>
+<ul>
+<li>Line comments stop before <code>\n</code>, <code>\r</code>, or
+<code>\r\n</code>, leaving the line ending to the main loop; block
+comments close at the first <code>*/</code>.</li>
+<li>Comments emit no tokens, do not populate the symbol table, and do
+not scan code-like contents.</li>
+<li>Unterminated blocks report exactly once at the opening position and
+leave the cursor at EOF.</li>
+<li>A 10,000-line block comment scans without recursion.</li>
+<li>Diagnostics are identical in <code>reporter.errors</code> and
+stderr, and separate reporters do not share errors.</li>
+<li>CLI exit codes are <code>0</code> (success), <code>1</code> (lexical
+errors), and <code>2</code> (usage).</li>
+</ul>
+<h4 data-number="6.1.2"
+id="whole-lexer-integration-checks-13-tests"><span
+class="header-section-number">6.1.2</span> Whole-lexer integration
+checks — 13 tests</h4>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> unittest discover <span class="at">-s</span> tests/integration <span class="at">-v</span></span></code></pre></div>
+<p><code>tests/integration/test_lexer.py</code> runs against the
+complete scanner and covers:</p>
+<ul>
+<li>The specification sample matches
+<code>tests/expected_output.txt</code> byte for byte.</li>
+<li>Every keyword and boolean literal, plus case-sensitive identifier
+fallbacks (<code>Class</code>, <code>string</code>, <code>Main</code>,
+<code>True</code>, <code>FALSE</code>).</li>
+<li>Symbol-table first-occurrence semantics and stored positions.</li>
+<li>Integer, float, single-quoted, double-quoted, and empty
+strings.</li>
+<li>Longest-match operators and all delimiters with correct
+columns.</li>
+<li>Comments as token separators while <code>/</code> remains
+division.</li>
+<li>Comment markers inside strings staying literal.</li>
+<li>Three programs in <code>sample_programs.mj</code> covering every
+<code>TokenType</code> except <code>ERROR</code>.</li>
+<li>All four error fixtures with exact messages and positions.</li>
+<li>Invalid identifiers such as <code>2_name</code> and recovery after
+an unknown character.</li>
+<li>End-to-end CLI output equal to the golden file.</li>
+</ul>
+<p><code>tests/integration/</code> is specified explicitly as a
+discovery directory, so it is not included in the first command.</p>
+<h3 data-number="6.2" id="fixtures"><span
+class="header-section-number">6.2</span> Fixtures</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Input</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/sample1.mj</code></td>
+<td>Specification example.</td>
+</tr>
+<tr>
+<td><code>tests/expected_output.txt</code></td>
+<td>Golden token stream for <code>sample1.mj</code>, including
+<code>EOF</code>.</td>
+</tr>
+<tr>
+<td><code>tests/sample_programs.mj</code></td>
+<td>Three programs covering all token categories except
+<code>ERROR</code>.</td>
+</tr>
+<tr>
+<td><code>tests/comments_only.mj</code></td>
+<td>Comment-only smoke test; only <code>EOF</code> is emitted.</td>
+</tr>
+<tr>
+<td><code>tests/sample_errors.mj</code></td>
+<td>Mixed-error example; useful for manual inspection but not for
+isolating all four diagnostics.</td>
+</tr>
+<tr>
+<td><code>tests/fixtures/errors/invalid_symbol.mj</code></td>
+<td><code>@</code> at line 1, column 12.</td>
+</tr>
+<tr>
+<td><code>tests/fixtures/errors/invalid_identifier.mj</code></td>
+<td><code>1name</code> at line 1, column 1.</td>
+</tr>
+<tr>
+<td><code>tests/fixtures/errors/unclosed_string.mj</code></td>
+<td>Opening quote at line 1, column 15.</td>
+</tr>
+<tr>
+<td><code>tests/fixtures/errors/unclosed_comment.mj</code></td>
+<td>Opening <code>/*</code> at line 1, column 1.</td>
+</tr>
+</tbody>
+</table>
+<p>The fixtures are intentionally separate because an unclosed string
+consumes the rest of the file, which would hide a later unclosed-comment
+error.</p>
+<h3 data-number="6.3" id="manual-checks"><span
+class="header-section-number">6.3</span> Manual checks</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Successful scan; tokens on stdout.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/sample1.mj</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Comment-only input; prints only the EOF token, exits 0.</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/comments_only.mj</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Error input; prints EOF on stdout and one diagnostic on stderr, exits 1.</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/fixtures/errors/unclosed_comment.mj</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Usage error; exits 2.</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py</span></code></pre></div>
+<h3 data-number="6.4" id="adding-tests"><span
+class="header-section-number">6.4</span> Adding tests</h3>
+<ul>
+<li>Put unit tests at the top level of <code>tests/</code> so the first
+discovery command finds them. Put full-scanner tests under
+<code>tests/integration/</code>.</li>
+<li>Import from <code>src.*</code> (for example
+<code>from src.scanner import Lexer</code>) and run from the repository
+root.</li>
+<li>Redirect stderr with
+<code>contextlib.redirect_stderr(io.StringIO())</code> when a test
+intentionally triggers diagnostics, so test output stays clean.</li>
+<li>Assert <code>lexer.reporter.errors</code> for exact messages and
+<code>token.type</code>/<code>lexeme</code> for classification.</li>
+<li>Remember that every successful scan ends with exactly one
+<code>EOF</code> token; use <code>tokens[:-1]</code> when comparing
+token sequences.</li>
+</ul>
+<h2 data-number="7" id="usage"><span
+class="header-section-number">7</span> Usage</h2>
+<h3 data-number="7.1" id="requirements"><span
+class="header-section-number">7.1</span> Requirements</h3>
+<ul>
+<li>Python 3.10 or newer.</li>
+<li>No third-party packages.</li>
+</ul>
+<h3 data-number="7.2" id="command-line"><span
+class="header-section-number">7.2</span> Command line</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py <span class="op">&lt;</span>source-file<span class="op">&gt;</span></span></code></pre></div>
+<p><code>main.py</code> reads exactly one file as UTF-8, scans it, and
+prints one line per token to stdout:</p>
+<pre class="text"><code>Lexeme: &lt;lexeme&gt;, Token: &lt;TOKEN_TYPE&gt;</code></pre>
+<p>Lexical diagnostics are printed to stderr. The final token is always
+<code>EOF</code>, whose lexeme is empty:</p>
+<pre class="text"><code>Lexeme: , Token: EOF</code></pre>
+<p>Example:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/sample1.mj</span></code></pre></div>
+<p>Output begins:</p>
+<pre class="text"><code>Lexeme: class, Token: CLASS
+Lexeme: Student, Token: IDENTIFIER
+Lexeme: {, Token: LCUR
+Lexeme: public, Token: PUBLIC
+Lexeme: static, Token: STATIC
+Lexeme: void, Token: VOID
+Lexeme: main, Token: MAIN
+...
+Lexeme: , Token: EOF</code></pre>
+<h3 data-number="7.3" id="exit-codes"><span
+class="header-section-number">7.3</span> Exit codes</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Scan completed with no lexical errors.</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>At least one lexical error was reported. Tokens are still
+printed.</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Wrong number of command-line arguments; a usage line is
+printed.</td>
+</tr>
+</tbody>
+</table>
+<p>Example of an error run:</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> main.py tests/fixtures/errors/unclosed_comment.mj</span></code></pre></div>
+<p>stdout:</p>
+<pre class="text"><code>Lexeme: , Token: EOF</code></pre>
+<p>stderr:</p>
+<pre class="text"><code>Error: unclosed comment starting at line 1, column 1.</code></pre>
+<p>exit status: <code>1</code>.</p>
+<h3 data-number="7.4" id="programmatic-use"><span
+class="header-section-number">7.4</span> Programmatic use</h3>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> src.scanner <span class="im">import</span> Lexer</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> src.tokens <span class="im">import</span> TokenType</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>source <span class="op">=</span> <span class="st">&#39;int age = 20;&#39;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>lexer <span class="op">=</span> Lexer(source)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>tokens <span class="op">=</span> lexer.scan_tokens()</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> token <span class="kw">in</span> tokens:</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(token.<span class="bu">type</span>.name, <span class="bu">repr</span>(token.lexeme), token.line, token.col)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> lexer.reporter.has_errors():</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;errors:&quot;</span>, lexer.reporter.errors)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;symbols:&quot;</span>, <span class="bu">len</span>(lexer.symbol_table))</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;age at:&quot;</span>, lexer.symbol_table.lookup(<span class="st">&quot;age&quot;</span>))</span></code></pre></div>
+<p>This prints the token stream, then reports the number of distinct
+identifiers and the first <code>age</code> token.
+<code>scan_tokens()</code> is normally called once per lexer.</p>
+<h3 data-number="7.5" id="what-the-scanner-does-not-do"><span
+class="header-section-number">7.5</span> What the scanner does not
+do</h3>
+<p>Phase 1 is lexical analysis only:</p>
+<ul>
+<li>It does not parse statements or expressions.</li>
+<li>It does not validate that tokens form a grammatical program.</li>
+<li>It does not assign types or check declarations.</li>
+<li>It does not evaluate literals; <code>NUMBER</code> lexemes remain
+strings.</li>
+</ul>
+<p>The outputs intended for later phases are <code>lexer.tokens</code>
+(the stream) and <code>lexer.symbol_table</code> (first occurrence of
+each user-defined identifier).</p>
+<h3 data-number="7.6" id="related-reading"><span
+class="header-section-number">7.6</span> Related reading</h3>
+<ul>
+<li><a href="#architecture">Architecture</a> — how scanning works
+internally.</li>
+<li><a href="#data-structures">Data Structures</a> — <code>Token</code>,
+<code>Lexer</code>, <code>SymbolTable</code>, and reporter shapes.</li>
+<li><a href="#token-reference">Token Reference</a> — complete token
+vocabulary.</li>
+<li><a href="#error-handling">Error Handling</a> — diagnostics and
+recovery.</li>
+<li><a href="#testing">Testing</a> — how to run and extend the
+tests.</li>
+</ul>
+</body>
+</html>
