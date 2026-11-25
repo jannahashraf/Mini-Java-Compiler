@@ -6,19 +6,24 @@ and several constant lookup dictionaries.
 
 ## `TokenType` (enum)
 
-`src/tokens.py` defines `TokenType` with `auto()` values. The enum is the shared
-contract: every helper and test refers to these names, so adding, renaming, or
-removing a member affects the whole project.
+`compiler/tokens.py` defines `TokenType` with string values. The enum is the
+shared contract for all compiler sections: every scanner helper and parser rule
+refers to these names, so adding, renaming, or removing a member affects the
+whole project.
 
 Members grouped by purpose:
 
 | Group | Members |
 |---|---|
-| Keywords | `CLASS`, `PUBLIC`, `STATIC`, `VOID`, `INT`, `FLOAT`, `BOOLEAN`, `CHAR`, `STRING_TYPE`, `IF`, `ELSE`, `WHILE`, `FOR`, `RETURN`, `MAIN` |
-| Identifiers and literals | `IDENTIFIER`, `NUMBER`, `STRING`, `BOOLEAN_LITERAL` |
+| Keywords | `CLASS`, `PUBLIC`, `PRIVATE`, `PROTECTED`, `STATIC`, `VOID`, `INT`, `FLOAT`, `BOOLEAN`, `BOOLEAN_TYPE`, `CHAR`, `STRING_TYPE`, `IF`, `ELSE`, `WHILE`, `FOR`, `RETURN`, `MAIN` |
+| Identifiers and literals | `IDENTIFIER`, `NUMBER`, `STRING`, `BOOLEAN_LITERAL`, `TRUE`, `FALSE` |
 | Operators | `ASSIGN`, `MATHOP`, `LOGOP` |
 | Delimiters | `LPAR`, `RPAR`, `LCUR`, `RCUR`, `LSQU`, `RSQU`, `SEMICOLON`, `COMMA`, `DOT` |
 | Bookkeeping | `EOF`, `ERROR` |
+
+`PRIVATE`, `PROTECTED`, `BOOLEAN_TYPE`, `TRUE`, and `FALSE` are part of the
+Phase 2/3 grammar contract. `BOOLEAN_TYPE` aliases `BOOLEAN`; `TRUE` and `FALSE`
+alias `BOOLEAN_LITERAL`. The scanner does not emit `PRIVATE` or `PROTECTED`.
 
 `ERROR` exists in the contract but the current scanner does not emit it: errors
 are reported as diagnostics instead. `EOF` is always emitted as the final token.
@@ -33,8 +38,9 @@ class Token:
     line: int
     col: int
 
-    def __str__(self) -> str:
-        return f"Lexeme: {self.lexeme}, Token: {self.type.name}"
+    @property
+    def column(self) -> int:
+        return self.col
 ```
 
 | Field | Type | Meaning |
@@ -44,16 +50,17 @@ class Token:
 | `line` | `int` | 1-based line of the token's first character. |
 | `col` | `int` | 1-based column of the token's first character. |
 
-Because it is a regular dataclass, equality compares all four fields and the
-generated `repr` is available for debugging. `str(token)` is the CLI output
-format, for example `Lexeme: class, Token: CLASS`.
+`column` is a read-only alias of `col` for Phase 2/3 code. Because this is a
+regular dataclass, equality compares the four stored fields and the generated
+`repr` is available for debugging. `str(token)` is the CLI output format; see
+`Token.__str__` in `compiler/tokens.py` for its current shape.
 
 For string tokens the lexeme retains the quotes (`"Ali"`, `'A'`). For numbers it
 is the original spelling (`85.5`, not a parsed float).
 
 ## `Lexer` (central state)
 
-Defined in `src/scanner.py`. One instance scans one source string.
+Defined in `compiler/lexer/scanner.py`. One instance scans one source string.
 
 | Attribute | Type | Purpose |
 |---|---|---|
@@ -90,7 +97,7 @@ Invariants and behavior:
 
 ## `SymbolTable`
 
-Defined in `src/symbol_table.py`. It stores user-defined identifier names, not
+Defined in `compiler/lexer/symbol_table.py`. It stores user-defined identifier names, not
 keywords or `main`/`true`/`false`.
 
 ```python
@@ -121,7 +128,7 @@ Design notes:
 
 ## `LexerErrorReporter`
 
-Defined in `src/errors.py`.
+Defined in `compiler/errors.py`.
 
 ```python
 class LexerErrorReporter:
@@ -148,14 +155,14 @@ All lookup tables are module-level constants, created once at import time.
 
 ### `KEYWORDS`
 
-`dict[str, TokenType]` in `src/keywords.py`, keyed by exact, case-sensitive
+`dict[str, TokenType]` in `compiler/lexer/keywords.py`, keyed by exact, case-sensitive
 lexeme. It also maps `main` to `MAIN` and `true`/`false` to
 `BOOLEAN_LITERAL`. See [token-reference.md](token-reference.md) for the complete
 list.
 
 ### Operator and delimiter tables
 
-`src/operators.py` defines three dictionaries:
+`compiler/lexer/operators.py` defines three dictionaries:
 
 | Constant | Key type | Value | Checked |
 |---|---|---|---|

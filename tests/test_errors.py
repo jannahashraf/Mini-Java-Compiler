@@ -5,7 +5,7 @@ import io
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 
-from src.errors import LexerErrorReporter
+from compiler.errors import LexerErrorReporter
 
 
 class ErrorReporterTests(unittest.TestCase):

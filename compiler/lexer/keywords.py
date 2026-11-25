@@ -10,7 +10,7 @@ its own token MAIN (see the spec sample output).
 """
 from __future__ import annotations
 
-from .tokens import TokenType
+from compiler.tokens import TokenType
 
 
 KEYWORDS: dict[str, TokenType] = {

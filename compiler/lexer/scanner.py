@@ -13,10 +13,11 @@ never edit the same file by accident:
 """
 from __future__ import annotations
 
+from compiler.errors import LexerErrorReporter
+from compiler.tokens import Token, TokenType
+
 from . import comments, identifiers, literals, operators
-from .errors import LexerErrorReporter
 from .symbol_table import SymbolTable
-from .tokens import Token, TokenType
 
 WHITESPACE = " \t\r\n"
 

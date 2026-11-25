@@ -79,13 +79,16 @@ rest of the file, which would hide a later unclosed-comment error.
 
 ```bash
 # Successful scan; tokens on stdout.
-python3 main.py tests/sample1.mj
+python3 main.py --tokens tests/sample1.mj
 
 # Comment-only input; prints only the EOF token, exits 0.
-python3 main.py tests/comments_only.mj
+python3 main.py --tokens tests/comments_only.mj
 
 # Error input; prints EOF on stdout and one diagnostic on stderr, exits 1.
-python3 main.py tests/fixtures/errors/unclosed_comment.mj
+python3 main.py --tokens tests/fixtures/errors/unclosed_comment.mj
+
+# Pending parser stub reported without a traceback, exits 1.
+python3 main.py inputs/valid/example.minijava
 
 # Usage error; exits 2.
 python3 main.py
@@ -95,8 +98,8 @@ python3 main.py
 
 - Put unit tests at the top level of `tests/` so the first discovery command
   finds them. Put full-scanner tests under `tests/integration/`.
-- Import from `src.*` (for example `from src.scanner import Lexer`) and run from
-  the repository root.
+- Import from `compiler.*` (for example `from compiler.lexer.scanner import Lexer`)
+  and run from the repository root.
 - Redirect stderr with `contextlib.redirect_stderr(io.StringIO())` when a test
   intentionally triggers diagnostics, so test output stays clean.
 - Assert `lexer.reporter.errors` for exact messages and `token.type`/`lexeme`

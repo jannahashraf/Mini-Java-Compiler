@@ -61,10 +61,22 @@ Integration reminders:
 For example:
 
 ```bash
-python3 main.py tests/comments_only.mj
-python3 main.py tests/fixtures/errors/unclosed_comment.mj
+python3 main.py --tokens tests/comments_only.mj
+python3 main.py --tokens tests/fixtures/errors/unclosed_comment.mj
 ```
 
 The second command intentionally exits with status `1` and prints one error to
 stderr. Comments never emit tokens; an unterminated block consumes through EOF,
 reports its opening position once, and lets the scanner append `EOF`.
+
+## Structure and pipeline checks
+
+```bash
+python3 -m pytest -q tests/test_structure.py tests/test_pipeline.py
+```
+
+`test_structure.py` checks the `Parser` mixin assembly and the parse tree
+printer. `test_pipeline.py` checks the shared token contract (including the
+`column`/`col` alias and the parser-side token names) and the single `main.py`
+CLI: `--tokens` prints the lexer stream, lexical errors stop the pipeline, and
+the pending grammar stub is reported without a traceback.

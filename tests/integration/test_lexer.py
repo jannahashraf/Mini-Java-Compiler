@@ -11,8 +11,8 @@ import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
 
-from src.scanner import Lexer
-from src.tokens import Token, TokenType
+from compiler.lexer.scanner import Lexer
+from compiler.tokens import Token, TokenType
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -141,7 +141,12 @@ class LexerIntegrationTests(unittest.TestCase):
     def test_multiple_programs_cover_the_shared_token_contract(self) -> None:
         source = (TESTS / "sample_programs.mj").read_text(encoding="utf-8")
         _, tokens = self.scan_valid(source)
-        self.assertEqual({t.type for t in tokens}, set(TokenType) - {TokenType.ERROR})
+        lexer_types = set(TokenType) - {
+            TokenType.ERROR,
+            TokenType.PRIVATE,
+            TokenType.PROTECTED,
+        }
+        self.assertEqual({t.type for t in tokens}, lexer_types)
         self.assertEqual(sum(t.type == TokenType.CLASS for t in tokens), 3)
 
     def test_spec_error_fixtures(self) -> None:
@@ -200,7 +205,7 @@ class LexerIntegrationTests(unittest.TestCase):
 
     def test_sample_cli_prints_the_golden_output(self) -> None:
         result = subprocess.run(
-            [sys.executable, "main.py", "tests/sample1.mj"],
+            [sys.executable, "main.py", "--tokens", "tests/sample1.mj"],
             cwd=ROOT, capture_output=True, text=True, timeout=5, check=False,
         )
         expected = (TESTS / "expected_output.txt").read_text(encoding="utf-8")

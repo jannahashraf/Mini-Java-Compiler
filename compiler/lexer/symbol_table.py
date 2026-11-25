@@ -8,7 +8,7 @@ it, so keep the interface simple and clean.
 """
 from __future__ import annotations
 
-from .tokens import Token
+from compiler.tokens import Token
 
 
 class SymbolTable:

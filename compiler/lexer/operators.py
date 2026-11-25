@@ -19,7 +19,7 @@ Anything not matched is an error:
 """
 from __future__ import annotations
 
-from .tokens import TokenType
+from compiler.tokens import TokenType
 
 TWO_CHAR_OPERATORS = {
     ">=": TokenType.LOGOP,

@@ -9,7 +9,7 @@ Literals in Mini Java:
 """
 from __future__ import annotations
 
-from .tokens import TokenType
+from compiler.tokens import TokenType
 
 
 def scan_number(lexer) -> None:

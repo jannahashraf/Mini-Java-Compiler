@@ -22,13 +22,13 @@ class CommentCliTests(unittest.TestCase):
         )
 
     def test_comment_only_input_succeeds(self) -> None:
-        result = self.run_cli("tests/comments_only.mj")
+        result = self.run_cli("--tokens", "tests/comments_only.mj")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "Lexeme: , Token: EOF\n")
         self.assertEqual(result.stderr, "")
 
     def test_unclosed_comment_fails_with_separate_diagnostic(self) -> None:
-        result = self.run_cli("tests/fixtures/errors/unclosed_comment.mj")
+        result = self.run_cli("--tokens", "tests/fixtures/errors/unclosed_comment.mj")
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, "Lexeme: , Token: EOF\n")
         self.assertEqual(
@@ -39,8 +39,11 @@ class CommentCliTests(unittest.TestCase):
     def test_missing_argument_shows_usage(self) -> None:
         result = self.run_cli()
         self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, "Usage: python3 main.py <source-file>\n")
-        self.assertEqual(result.stderr, "")
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(
+            result.stderr,
+            "Usage: python3 main.py [--tokens | --parse] <source-file>\n",
+        )
 
 
 if __name__ == "__main__":

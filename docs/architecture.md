@@ -3,7 +3,8 @@
 The lexer is a single-pass, character-oriented scanner. `main.py` reads the
 whole source file into a string, builds one `Lexer`, and asks it for a token
 list. All scanning is done by the `Lexer` plus small helper functions that
-receive the lexer as their context object.
+receive the lexer as their context object. `compiler/cli.py` drives the later
+stages when they are implemented.
 
 ## Pipeline
 
@@ -14,7 +15,7 @@ source file
 main.py  (read UTF-8 text)
     |
     v
-Lexer.scan_tokens()
+Lexer.scan_tokens()                       compiler/lexer/
     |
     +--> whitespace .................. advance()
     +--> // or /* .................... comments.skip_comment()
@@ -25,7 +26,19 @@ Lexer.scan_tokens()
     |
     v
 tokens: list[Token]   +   symbol_table: SymbolTable   +   reporter.errors
+    |
+    v
+Parser.parse_program()                    compiler/parser/
+    |
+    v
+ParseTreeNode tree                        compiler/ast/
+    |
+    v
+SemanticAnalyzer.analyze(tree)            compiler/semantic/
 ```
+
+`--tokens` stops after lexing, `--parse` stops after tree printing, and the
+default command runs all stages.
 
 Every successful helper call consumes characters through `Lexer.advance()` and
 usually calls `Lexer.emit(...)`. Comments and whitespace produce no token.
@@ -35,16 +48,22 @@ Errors are reported through `Lexer.reporter` and scanning continues.
 
 | Module | Responsibility |
 |---|---|
-| `main.py` | Parse CLI arguments, read the source file, create a `Lexer`, print tokens, map errors to an exit code. |
-| `src/tokens.py` | Shared `TokenType` enum and `Token` dataclass. This is the contract between all modules. |
-| `src/scanner.py` | `Lexer` class: source text, cursor position, line/column tracking, token collection, main loop, and dispatch. |
-| `src/keywords.py` | `KEYWORDS` dictionary mapping reserved words to token types. |
-| `src/identifiers.py` | `scan_identifier_or_keyword()`: consume an identifier, classify it as keyword or `IDENTIFIER`, update the symbol table. |
-| `src/symbol_table.py` | `SymbolTable`: first occurrence of each user-defined identifier, keyed by lexeme. |
-| `src/literals.py` | `scan_number()` and `scan_string()`: numeric and quoted-string literals, including invalid forms. |
-| `src/operators.py` | `scan_operator_or_delimiter()`: longest-match operators, delimiters, and unknown-character errors. |
-| `src/comments.py` | `skip_comment()`: `//` line comments and non-nesting `/* ... */` block comments. |
-| `src/errors.py` | `LexerErrorReporter`: format, record, and print lexical diagnostics. |
+| `main.py` | Single CLI entry point; delegates to `compiler/cli.py`. |
+| `compiler/cli.py` | Parse CLI arguments, run the selected stages, map errors to an exit code. |
+| `compiler/tokens.py` | Shared `TokenType` enum and `Token` dataclass. This is the contract between all sections. |
+| `compiler/errors.py` | `LexerErrorReporter` plus syntax/semantic error types. |
+| `compiler/lexer/scanner.py` | `Lexer` class: source text, cursor position, line/column tracking, token collection, main loop, and dispatch. |
+| `compiler/lexer/keywords.py` | `KEYWORDS` dictionary mapping reserved words to token types. |
+| `compiler/lexer/identifiers.py` | `scan_identifier_or_keyword()`: consume an identifier, classify it as keyword or `IDENTIFIER`, update the symbol table. |
+| `compiler/lexer/symbol_table.py` | `SymbolTable`: first occurrence of each user-defined identifier, keyed by lexeme. |
+| `compiler/lexer/literals.py` | `scan_number()` and `scan_string()`: numeric and quoted-string literals, including invalid forms. |
+| `compiler/lexer/operators.py` | `scan_operator_or_delimiter()`: longest-match operators, delimiters, and unknown-character errors. |
+| `compiler/lexer/comments.py` | `skip_comment()`: `//` line comments and non-nesting `/* ... */` block comments. |
+| `compiler/parser/base.py` | Token navigation, `expect()`, and `synchronize()`. |
+| `compiler/parser/parser.py` | `Parser`: combines the three grammar mixins with `ParserBase`. |
+| `compiler/parser/declarations.py`, `statements.py`, `expressions.py` | Grammar sections (stubs until implemented). |
+| `compiler/ast/nodes.py`, `printer.py` | `ParseTreeNode` and indented tree output. |
+| `compiler/semantic/symbol_table.py`, `analyzer.py` | Scopes and semantic checks. |
 
 ## The `Lexer` as shared context
 
@@ -160,8 +179,11 @@ comments and strings do not hit recursion limits.
 
 ## Phase boundaries
 
-This project implements only lexical analysis. It does not parse grammar,
-type-check, or generate code. The token stream and first-occurrence symbol table
-are the hand-off points intended for later phases (parsing and semantic
-analysis). See [data-structures.md](data-structures.md) and
-[token-reference.md](token-reference.md) for their exact shapes.
+Phase 1 implements lexical analysis. The parser and semantic stages are
+integrated alongside it: `main.py` passes the lexer's token stream to `Parser`,
+prints the resulting `ParseTreeNode` tree, and runs `SemanticAnalyzer` over it.
+The grammar and analysis methods are stubs to be completed by the team; until
+then the CLI reports the pending stub instead of producing a tree. Section
+ownership is recorded in [PROJECT.md](../PROJECT.md). See
+[data-structures.md](data-structures.md) and
+[token-reference.md](token-reference.md) for the shared token shapes.

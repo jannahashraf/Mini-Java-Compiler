@@ -5,7 +5,7 @@ OWNER: Member 2 (Identifiers, Keywords & Symbol Table).
 from __future__ import annotations
 
 from .keywords import KEYWORDS
-from .tokens import TokenType
+from compiler.tokens import TokenType
 
 
 def scan_identifier_or_keyword(lexer) -> None:

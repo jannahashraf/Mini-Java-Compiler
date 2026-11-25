@@ -1,7 +1,7 @@
 # Token Reference
 
 This is the complete token vocabulary produced by the Phase 1 lexer. Token
-names come from `TokenType` in `src/tokens.py`.
+names come from `TokenType` in `compiler/tokens.py`.
 
 ## Token categories
 
@@ -22,7 +22,7 @@ names come from `TokenType` in `src/tokens.py`.
 ## Keywords
 
 Mini Java is case-sensitive and keyword lookup is exact. The mapping lives in
-`src/keywords.py`.
+`compiler/lexer/keywords.py`.
 
 | Lexeme | Token type |
 |---|---|

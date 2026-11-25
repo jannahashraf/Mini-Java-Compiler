@@ -8,61 +8,52 @@
 ## Command line
 
 ```bash
-python3 main.py <source-file>
+python3 main.py [--tokens | --parse] <source-file>
 ```
 
-`main.py` reads exactly one file as UTF-8, scans it, and prints one line per
-token to stdout:
+`main.py` is the single entry point. The stages are:
+
+| Stage | Command | Output |
+|---|---|---|
+| Lexer only | `python3 main.py --tokens <file>` | One line per token on stdout. |
+| Through parse tree | `python3 main.py --parse <file>` | Token diagnostics, then the indented parse tree. |
+| Full pipeline | `python3 main.py <file>` | Parse tree plus semantic diagnostics. |
+
+With `--tokens`, each token line uses `Token.__str__` from
+`compiler/tokens.py`, for example:
 
 ```text
-Lexeme: <lexeme>, Token: <TOKEN_TYPE>
-```
-
-Lexical diagnostics are printed to stderr. The final token is always `EOF`, whose
-lexeme is empty:
-
-```text
-Lexeme: , Token: EOF
+Lexeme: class, Token: CLASS, line: 1, col: 1
+Lexeme: , Token: EOF, line: 9, col: 1
 ```
 
 Example:
 
 ```bash
-python3 main.py tests/sample1.mj
+python3 main.py --tokens tests/sample1.mj
 ```
 
-Output begins:
-
-```text
-Lexeme: class, Token: CLASS
-Lexeme: Student, Token: IDENTIFIER
-Lexeme: {, Token: LCUR
-Lexeme: public, Token: PUBLIC
-Lexeme: static, Token: STATIC
-Lexeme: void, Token: VOID
-Lexeme: main, Token: MAIN
-...
-Lexeme: , Token: EOF
-```
+The default pipeline currently reports the pending grammar stub on stderr and
+exits 1 until the parser sections are implemented.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| `0` | Scan completed with no lexical errors. |
-| `1` | At least one lexical error was reported. Tokens are still printed. |
-| `2` | Wrong number of command-line arguments; a usage line is printed. |
+| `0` | Selected stages completed with no errors. |
+| `1` | Lexical, syntax, or semantic error reported; or a stub stage not implemented yet. |
+| `2` | Wrong arguments or an unreadable source file. |
 
-Example of an error run:
+Error example:
 
 ```bash
-python3 main.py tests/fixtures/errors/unclosed_comment.mj
+python3 main.py --tokens tests/fixtures/errors/unclosed_comment.mj
 ```
 
 stdout:
 
 ```text
-Lexeme: , Token: EOF
+Lexeme: , Token: EOF, line: 2, col: 1
 ```
 
 stderr:
@@ -76,8 +67,8 @@ exit status: `1`.
 ## Programmatic use
 
 ```python
-from src.scanner import Lexer
-from src.tokens import TokenType
+from compiler.lexer.scanner import Lexer
+from compiler.tokens import TokenType
 
 source = 'int age = 20;'
 lexer = Lexer(source)
@@ -96,22 +87,15 @@ print("age at:", lexer.symbol_table.lookup("age"))
 This prints the token stream, then reports the number of distinct identifiers and
 the first `age` token. `scan_tokens()` is normally called once per lexer.
 
-## What the scanner does not do
-
-Phase 1 is lexical analysis only:
-
-- It does not parse statements or expressions.
-- It does not validate that tokens form a grammatical program.
-- It does not assign types or check declarations.
-- It does not evaluate literals; `NUMBER` lexemes remain strings.
-
-The outputs intended for later phases are `lexer.tokens` (the stream) and
-`lexer.symbol_table` (first occurrence of each user-defined identifier).
+To parse programmatically, pass the non-`ERROR` tokens to
+`compiler.parser.parser.Parser` and print the tree with
+`compiler.ast.printer.print_tree`.
 
 ## Related reading
 
-- [architecture.md](architecture.md) — how scanning works internally.
+- [architecture.md](architecture.md) — how the stages work internally.
 - [data-structures.md](data-structures.md) — `Token`, `Lexer`, `SymbolTable`, and reporter shapes.
 - [token-reference.md](token-reference.md) — complete token vocabulary.
 - [error-handling.md](error-handling.md) — diagnostics and recovery.
 - [testing.md](testing.md) — how to run and extend the tests.
+- [PROJECT.md](../PROJECT.md) — section assignments for the five members.

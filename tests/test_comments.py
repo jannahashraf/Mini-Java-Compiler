@@ -6,9 +6,9 @@ import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
 
-from src.comments import skip_comment
-from src.scanner import Lexer
-from src.tokens import Token, TokenType
+from compiler.lexer.comments import skip_comment
+from compiler.lexer.scanner import Lexer
+from compiler.tokens import Token, TokenType
 
 
 class CommentTests(unittest.TestCase):

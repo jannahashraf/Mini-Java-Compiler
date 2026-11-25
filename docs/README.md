@@ -1,8 +1,9 @@
-# Mini Java Lexer — Documentation
+# Mini Java Compiler — Documentation
 
-This documentation covers Phase 1 of the Mini Java compiler: a hand-written
-lexical analyzer (scanner) that turns Mini Java source text into a stream of
-tokens and builds a symbol table of user-defined identifiers.
+This documentation covers the hand-written Mini Java compiler: a lexer, a
+recursive-descent parser, a parse tree, and semantic analysis. The lexer sections
+are described in detail here; see [PROJECT.md](../PROJECT.md) for section
+assignments and the full pipeline.
 
 No third-party or ready-made lexer/parser libraries are used. The only runtime
 dependency is the Python standard library (Python 3.10+).
@@ -11,7 +12,7 @@ dependency is the Python standard library (Python 3.10+).
 
 ```bash
 # Scan a sample program; tokens go to stdout.
-python3 main.py tests/sample1.mj
+python3 main.py --tokens tests/sample1.mj
 
 # Run the unit and CLI tests.
 python3 -m unittest discover -s tests -v
@@ -34,19 +35,20 @@ python3 -m unittest discover -s tests/integration -v
 ## Repository layout
 
 ```
-main.py                  CLI entry point
-src/
+main.py                  Single CLI entry point
+compiler/
   tokens.py              TokenType + Token (shared contract)
-  scanner.py             Lexer: character reader, main loop, dispatch
-  keywords.py            Keyword lookup table
-  identifiers.py         scan_identifier_or_keyword()
-  symbol_table.py        SymbolTable for identifiers
-  literals.py            scan_number() / scan_string()
-  operators.py           scan_operator_or_delimiter()
-  comments.py            skip_comment()
-  errors.py              LexerErrorReporter
-tests/                   Unit, CLI, and integration tests plus fixtures
+  errors.py              Lexer reporter + syntax/semantic errors
+  cli.py                 Stage driver
+  lexer/                 scanner.py, keywords.py, identifiers.py,
+                         symbol_table.py, literals.py, operators.py, comments.py
+  parser/                base.py, parser.py, declarations.py,
+                         statements.py, expressions.py
+  ast/                   nodes.py, printer.py
+  semantic/              symbol_table.py, analyzer.py
+tests/                   Unit, CLI, structure, and pipeline tests
 docs/                    This documentation
+PROJECT.md               Section assignments for the five members
 REPORT.md                Phase 1 report
 ```
 
@@ -60,4 +62,5 @@ each lexeme it recognizes. Identifiers are also inserted into a `SymbolTable`,
 which keeps the first occurrence of each name. Lexical errors are recorded and
 printed to stderr by a shared `LexerErrorReporter` without aborting the scan.
 When the source is exhausted, the lexer appends a final `EOF` token and returns
-the complete token list.
+the complete token list. `compiler/cli.py` can then feed those tokens to the
+parser, print the parse tree, and run semantic analysis.
